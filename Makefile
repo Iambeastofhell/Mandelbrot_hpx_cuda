@@ -1,4 +1,7 @@
 CXX := g++
+HPX_PREFIX := ./hpx/install
+export PKG_CONFIG_PATH := $(HPX_PREFIX)/lib64/pkgconfig:$(PKG_CONFIG_PATH)
+export PATH := $(HPX_PREFIX)/bin:$(PATH)
 CXXFLAGS := -std=c++17 -O3 -Wall -Wextra -pedantic
 
 COMMON_SOURCE := mandelbrot_common.cpp
@@ -16,7 +19,7 @@ sequential:
 
 hpx:
 	@if command -v hpxcxx >/dev/null 2>&1; then \
-		hpxcxx $(CXXFLAGS) $(HPX_SOURCE) $(COMMON_SOURCE) -o $(HPX_TARGET); \
+		hpxcxx --exe=$(HPX_TARGET) $(CXXFLAGS) $(HPX_SOURCE) $(COMMON_SOURCE); \
 	elif pkg-config --exists hpx_application; then \
 		$(CXX) $(CXXFLAGS) $(HPX_SOURCE) $(COMMON_SOURCE) -o $(HPX_TARGET) \
 			$$(pkg-config --cflags --libs hpx_application); \
