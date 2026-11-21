@@ -69,7 +69,6 @@ For example:
 ./mandelbrot_hpx --width 1024 --height 1024 --maxiter 500 --threads 4 --save /dev/null
 ```
 
-Saving to `/dev/null` may not produce a PPM, so normal benchmarks should save to a temporary file outside the generation timer. The generation timer excludes saving.
 
 ### Complex plane ranges
 
@@ -82,7 +81,7 @@ ymin=-1.5
 ymax=1.5
 ```
 
-A zoomed range should also be tested:
+A zoomed range s
 
 ```text
 xmin=-1.35
@@ -121,23 +120,15 @@ Efficiency = speedup / HPX worker count
 
 Keep the same resolution, range, iteration count, and color mode for every sequential and HPX pair.
 
-An example sequential run is:
-
 ```bash
 ./mandelbrot_sequential --width 1024 --height 1024 --maxiter 500 --save /tmp/sequential.ppm
 ```
-
-An example HPX run is:
 
 ```bash
 ./mandelbrot_hpx --width 1024 --height 1024 --maxiter 500 --threads 8 --save /tmp/hpx.ppm
 ```
 
 ## Correctness check
-
-Compare the sequential and HPX PPM files before comparing performance.
-
-Both files must match:
 
 - Width and height
 - PPM header
@@ -146,11 +137,6 @@ Both files must match:
 - File size
 - Output file hash
 
-Example hash comparison:
 
-```bash
-sha256sum /tmp/sequential.ppm /tmp/hpx.ppm
-cmp /tmp/sequential.ppm /tmp/hpx.ppm
-```
 
 ## Results table
