@@ -154,15 +154,3 @@ cmp /tmp/sequential.ppm /tmp/hpx.ppm
 ```
 
 ## Results table
-
-Fill this table after running benchmarks on the target machine.
-
-| Resolution | Iterations | HPX threads | Sequential mean | HPX mean | Speedup | Efficiency |
-|---|---:|---:|---:|---:|---:|---:|
-| 256 by 256 | 100 | 1 | Not measured | Not measured | Not measured | Not measured |
-| 256 by 256 | 100 | 2 | Not measured | Not measured | Not measured | Not measured |
-| 512 by 512 | 500 | 4 | Not measured | Not measured | Not measured | Not measured |
-| 1024 by 1024 | 500 | 8 | Not measured | Not measured | Not measured | Not measured |
-| 1920 by 1080 | 500 | 8 | Not measured | Not measured | Not measured | Not measured |
-| 3840 by 2160 | 1000 | 8 | Not measured | Not measured | Not measured | Not measured |
-| 1024 by 1024 | 1000 | Hardware count | Not measured | Not measured | Not measured | Not measured |
