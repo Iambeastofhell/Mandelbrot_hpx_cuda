@@ -14,7 +14,7 @@ This repository contains CPU implementations of a Mandelbrot set image generator
 This implementation is responsible for HPX task based CPU parallelism. The existing sequential implementation is retained as a comparison baseline.
 
 - `mandelbrot_sequential` uses a normal nested CPU loop.
-- `mandelbrot_hpx` divides the image rows between HPX tasks.
+- `mandelbrot_hpx` makes one HPX task per image row.
 - Both programs use the same pixel mapping, color functions, PPM code, and command line options.
 
 ## Build
@@ -39,7 +39,11 @@ Build the HPX implementation:
 make hpx
 ```
 
-The HPX build requires an installed HPX development environment. The Makefile uses `hpxcxx` first. If `hpxcxx` is unavailable, it tries the `hpx_application` or `hpx` pkg-config package.
+The HPX build needs an installed HPX. It looks in `/usr` by default. For another install, such as a local build of the submodule, pass its prefix:
+
+```bash
+make hpx HPX_PREFIX=$PWD/hpx/install
+```
 
 Remove generated executables and temporary test files:
 
@@ -60,7 +64,7 @@ make clean
 | `--maxiter N` | Maximum escape iterations | 100 |
 | `--grayscale` | Use a grayscale color scheme | Off |
 | `--gradient` | Use a gradient color scheme | Off |
-| `--threads N` | HPX worker tasks or runtime workers | HPX default |
+| `--threads N` | HPX worker threads | HPX default |
 | `--save FILE` | Save the result as a PPM P6 image | None |
 | `--load FILE` | Load a PPM P6 image instead of generating | None |
 | `--display` | Open the result using the system image viewer | Off |
@@ -97,7 +101,7 @@ Width and height must be greater than zero. The minimum coordinate must be less 
   --display
 ```
 
-Using `--threads 8` asks the HPX runtime to use eight workers and divides the image into eight row ranges. In the sequential program, `--threads` is accepted but does not change the single threaded calculation.
+Using `--threads 8` asks the HPX runtime to use eight worker threads. The workers take rows from a shared pool as they become free. HPX does not allow more threads than the machine has CPUs. In the sequential program, `--threads` is accepted but ignored.
 
 ## Save and display combinations
 
@@ -143,3 +147,4 @@ They include:
 ## Benchmark
 
 Benchmark instructions and the comparison table are in [benchmark/README.md](benchmark/README.md).
+
