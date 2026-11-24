@@ -65,6 +65,27 @@ Pixel color_gradient(int iter, int max_iter) {
     return {r, g, b};
 }
 
+Pixel render_pixel(const AppOptions& options, int x, int y) {
+    double cr = options.xmin;
+    if (options.width > 1) {
+        cr += (options.xmax - options.xmin) * x / (options.width - 1);
+    }
+
+    double ci = options.ymin;
+    if (options.height > 1) {
+        ci += (options.ymax - options.ymin) * y / (options.height - 1);
+    }
+
+    int iter = mandelbrot(cr, ci, options.max_iter);
+    if (options.gradient) {
+        return color_gradient(iter, options.max_iter);
+    }
+    if (options.grayscale) {
+        return color_grayscale(iter, options.max_iter);
+    }
+    return color_black_and_white(iter, options.max_iter);
+}
+
 void print_usage(const char* program) {
     std::cout << "Usage: " << program << " [options]\n";
     std::cout << "Options:\n";

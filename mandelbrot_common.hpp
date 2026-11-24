@@ -41,6 +41,7 @@ int mandelbrot(double cr, double ci, int max_iter);
 Pixel color_black_and_white(int iter, int max_iter);
 Pixel color_grayscale(int iter, int max_iter);
 Pixel color_gradient(int iter, int max_iter);
+Pixel render_pixel(const AppOptions& options, int x, int y);
 
 bool parse_arguments(int argc, char* argv[], AppOptions& options, std::string& error);
 bool validate_arguments(const AppOptions& options, std::string& error);
