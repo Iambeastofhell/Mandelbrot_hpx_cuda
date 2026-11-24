@@ -13,7 +13,7 @@ HPX_SOURCE := CPU_hpx.cpp
 SEQUENTIAL_TARGET := $(BUILD_DIR)/mandelbrot_sequential
 HPX_TARGET := $(BUILD_DIR)/mandelbrot_hpx
 
-.PHONY: all sequential hpx clean check run-hpx run-seq
+.PHONY: all sequential hpx clean check run-hpx run-seq benchmark
 
 all: sequential hpx
 
@@ -34,6 +34,10 @@ run-seq: sequential $(OUTPUT_DIR)
 
 run-hpx: hpx $(OUTPUT_DIR)
 	./$(HPX_TARGET) --width 1920 --height 1080 --maxiter 500 --gradient --threads 8 --save $(OUTPUT_DIR)/mandelbrot_hpx.ppm
+
+benchmark: all
+	python3 benchmark/run_benchmark.py
+	python3 benchmark/make_tables.py > benchmark/results.md
 
 clean:
 	rm -rf $(BUILD_DIR) $(OUTPUT_DIR) /tmp/mandelbrot_check.ppm /tmp/mandelbrot_hpx.ppm
