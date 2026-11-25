@@ -15,6 +15,7 @@ This implementation is responsible for HPX task based CPU parallelism. The exist
 
 - `mandelbrot_sequential` uses a normal nested CPU loop.
 - `mandelbrot_hpx` makes one HPX task per image row.
+- `mandelbrot_cuda` runs one CUDA thread per pixel.
 - Both programs use the same pixel mapping, color functions, PPM code, and command line options.
 
 ## Build
@@ -50,6 +51,14 @@ Remove generated executables and temporary test files:
 ```bash
 make clean
 ```
+
+Build the CUDA implementation:
+
+```bash
+make cuda
+```
+
+This needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. The Makefile targets the installed GPU. To build for another one, set the architecture, for example `make cuda CUDA_ARCH=sm_80`. It is not part of `make all`.
 
 ## Inputs
 
@@ -103,6 +112,20 @@ Width and height must be greater than zero. The minimum coordinate must be less 
 
 Using `--threads 8` asks the HPX runtime to use eight worker threads. The workers take rows from a shared pool as they become free. HPX does not allow more threads than the machine has CPUs. In the sequential program, `--threads` is accepted but ignored.
 
+## CUDA example
+
+```bash
+./build/mandelbrot_cuda --width 1920 --height 1080 --maxiter 500 --gradient --save mandelbrot_cuda.ppm
+```
+
+It takes the same options as the other programs. `--threads` is accepted but ignored. It prints two times. The kernel time covers only the GPU computation. The generation time also includes allocating device memory and copying the image back to the host, which makes it the one to compare with the CPU programs. Starting the CUDA runtime is not counted in either.
+
+The pixel code is in `mandelbrot_kernel.cuh`. It repeats the CPU code in `mandelbrot_common.cpp`, and the Makefile compiles it with `--fmad=false` so the GPU does not fuse multiplications and additions. With that, the image should be identical to the CPU one:
+
+```bash
+cmp output/mandelbrot_cuda.ppm output/mandelbrot_seq.ppm
+```
+
 ## Save and display combinations
 
 Save only:
@@ -146,5 +169,5 @@ They include:
 
 ## Benchmark
 
-Benchmark instructions and the comparison table are in [benchmark/README.md](benchmark/README.md).
+Benchmark instructions are in [benchmark/README.md](benchmark/README.md). The CUDA results from the cluster are in [benchmark/cuda_results.md](benchmark/cuda_results.md).
 

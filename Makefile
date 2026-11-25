@@ -4,16 +4,20 @@ HPX_LIBDIR ?= $(HPX_PREFIX)/lib64
 HPX_FLAGS := -I$(HPX_PREFIX)/include -L$(HPX_LIBDIR) -Wl,-rpath,$(HPX_LIBDIR)
 HPX_LIBS := -lhpx_init -lhpx -lhpx_core -lhwloc -ltcmalloc_minimal -pthread -ldl -lrt
 CXXFLAGS := -std=c++17 -O3 -Wall -Wextra -pedantic
+NVCC := nvcc
+CUDA_ARCH ?= native
 
 BUILD_DIR := build
 OUTPUT_DIR := output
 COMMON_SOURCE := mandelbrot_common.cpp
 SEQUENTIAL_SOURCE := CPU_single_thread.cpp
 HPX_SOURCE := CPU_hpx.cpp
+CUDA_SOURCE := GPU_cuda.cu
 SEQUENTIAL_TARGET := $(BUILD_DIR)/mandelbrot_sequential
 HPX_TARGET := $(BUILD_DIR)/mandelbrot_hpx
+CUDA_TARGET := $(BUILD_DIR)/mandelbrot_cuda
 
-.PHONY: all sequential hpx clean check run-hpx run-seq benchmark
+.PHONY: all sequential hpx cuda clean check run-hpx run-seq run-cuda benchmark
 
 all: sequential hpx
 
@@ -26,6 +30,9 @@ sequential: $(BUILD_DIR)
 hpx: $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(HPX_FLAGS) $(HPX_SOURCE) $(COMMON_SOURCE) -o $(HPX_TARGET) $(HPX_LIBS)
 
+cuda: $(BUILD_DIR)
+	$(NVCC) -std=c++17 -O3 --fmad=false -arch=$(CUDA_ARCH) $(CUDA_SOURCE) $(COMMON_SOURCE) -o $(CUDA_TARGET)
+
 check: sequential
 	./$(SEQUENTIAL_TARGET) --width 128 --height 128 --maxiter 100 --save /tmp/mandelbrot_check.ppm
 
@@ -34,6 +41,9 @@ run-seq: sequential $(OUTPUT_DIR)
 
 run-hpx: hpx $(OUTPUT_DIR)
 	./$(HPX_TARGET) --width 1920 --height 1080 --maxiter 500 --gradient --threads 8 --save $(OUTPUT_DIR)/mandelbrot_hpx.ppm
+
+run-cuda: cuda $(OUTPUT_DIR)
+	./$(CUDA_TARGET) --width 1920 --height 1080 --maxiter 500 --gradient --save $(OUTPUT_DIR)/mandelbrot_cuda.ppm
 
 benchmark: all
 	python3 benchmark/run_benchmark.py
