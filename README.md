@@ -1,6 +1,6 @@
 # Mandelbrot set project
 
-This repository contains CPU implementations of a Mandelbrot set image generator for the course CS5658 GPU Programming.
+This repository contains a Mandelbrot set image generator for the course CS5658 GPU Programming.
 
 ## Authors
 
@@ -9,14 +9,14 @@ This repository contains CPU implementations of a Mandelbrot set image generator
 - Zeeshan Mohammed Rangrej 112301040
 - Rajat Bhootra 112301044
 
-## Team scope
+## Scope
 
-This implementation is responsible for HPX task based CPU parallelism. The existing sequential implementation is retained as a comparison baseline.
+Implementation of HPX applications for Mandelbrot set generation, compared with other versions such as sequential and pure CUDA.
 
 - `mandelbrot_sequential` uses a normal nested CPU loop.
-- `mandelbrot_hpx` makes one HPX task per image row.
+- `mandelbrot_hpx` splits the image into HPX tasks, one per row by default.
 - `mandelbrot_cuda` runs one CUDA thread per pixel.
-- Both programs use the same pixel mapping, color functions, PPM code, and command line options.
+- All programs use the same pixel mapping, colors, PPM format, and command line options.
 
 ## Build
 
@@ -28,7 +28,7 @@ Build the sequential implementation:
 make sequential
 ```
 
-Build both implementations:
+Build the CPU implementations:
 
 ```bash
 make
@@ -46,12 +46,6 @@ The HPX build needs an installed HPX. It looks in `/usr` by default. For another
 make hpx HPX_PREFIX=$PWD/hpx/install
 ```
 
-Remove generated executables and temporary test files:
-
-```bash
-make clean
-```
-
 Build the CUDA implementation:
 
 ```bash
@@ -59,6 +53,12 @@ make cuda
 ```
 
 This needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. The Makefile targets the installed GPU. To build for another one, set the architecture, for example `make cuda CUDA_ARCH=sm_80`. It is not part of `make all`.
+
+Remove generated executables, temporary test files, and the `output` directory:
+
+```bash
+make clean
+```
 
 ## Inputs
 
@@ -84,10 +84,12 @@ The default color mode is black and white. Use only one of `--grayscale` or `--g
 
 Width and height must be greater than zero. The minimum coordinate must be less than the maximum coordinate on both axes. Maximum iterations must be greater than zero.
 
+`--threads` and `--grain` only affect HPX. Other programs accept and ignore them.
+
 ## Sequential example
 
 ```bash
-./mandelbrot_sequential \
+./build/mandelbrot_sequential \
   --width 1920 --height 1080 \
   --xmin -2.0 --xmax 1.0 \
   --ymin -1.5 --ymax 1.5 \
@@ -100,7 +102,7 @@ Width and height must be greater than zero. The minimum coordinate must be less 
 ## HPX example
 
 ```bash
-./mandelbrot_hpx \
+./build/mandelbrot_hpx \
   --width 1920 --height 1080 \
   --xmin -2.0 --xmax 1.0 \
   --ymin -1.5 --ymax 1.5 \
@@ -111,7 +113,7 @@ Width and height must be greater than zero. The minimum coordinate must be less 
   --display
 ```
 
-Using `--threads 8` asks the HPX runtime to use eight worker threads. The workers take tasks from a shared pool as they become free. `--grain N` changes how many pixels each task covers. HPX does not allow more threads than the machine has CPUs. In the sequential program, `--threads` is accepted but ignored.
+Using `--threads 8` asks the HPX runtime to use eight worker threads. The workers take tasks from a shared pool as they become free. `--grain N` changes how many pixels each task covers. HPX does not allow more threads than the machine has CPUs.
 
 ## CUDA example
 
@@ -119,7 +121,7 @@ Using `--threads 8` asks the HPX runtime to use eight worker threads. The worker
 ./build/mandelbrot_cuda --width 1920 --height 1080 --maxiter 500 --gradient --save mandelbrot_cuda.ppm
 ```
 
-It takes the same options as the other programs. `--threads` is accepted but ignored. It prints two times. The kernel time covers only the GPU computation. The generation time also includes allocating device memory and copying the image back to the host, which makes it the one to compare with the CPU programs. Starting the CUDA runtime is not counted in either.
+It prints two times. The kernel time covers only the GPU computation. The generation time also includes allocating device memory and copying the image back to the host, which makes it the one to compare with the CPU programs. Starting the CUDA runtime is not counted in either.
 
 The pixel code is in `mandelbrot_kernel.cuh`. It repeats the CPU code in `mandelbrot_common.cpp`, and the Makefile compiles it with `--fmad=false` so the GPU does not fuse multiplications and additions. With that, the image should be identical to the CPU one:
 
@@ -132,28 +134,28 @@ cmp output/mandelbrot_cuda.ppm output/mandelbrot_seq.ppm
 Save only:
 
 ```bash
-./mandelbrot_hpx --width 1024 --height 1024 --save output.ppm
+./build/mandelbrot_hpx --width 1024 --height 1024 --save output.ppm
 ```
 
 Display only:
 
 ```bash
-./mandelbrot_hpx --width 1024 --height 1024 --gradient --display
+./build/mandelbrot_hpx --width 1024 --height 1024 --gradient --display
 ```
 
 Save and display:
 
 ```bash
-./mandelbrot_hpx --width 1024 --height 1024 --save output.ppm --display
+./build/mandelbrot_hpx --width 1024 --height 1024 --save output.ppm --display
 ```
 
 Load and display:
 
 ```bash
-./mandelbrot_sequential --load output.ppm --display
+./build/mandelbrot_sequential --load output.ppm --display
 ```
 
-A PPM file can be loaded by both programs. Loading does not run Mandelbrot generation.
+Any of the programs can load a PPM file. Loading does not run Mandelbrot generation.
 
 ## Shared code
 
