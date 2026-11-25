@@ -99,6 +99,7 @@ void print_usage(const char* program) {
     std::cout << "  --grayscale     Use a grayscale color scheme\n";
     std::cout << "  --gradient      Use a gradient color scheme (default: black and white)\n";
     std::cout << "  --threads N     HPX worker threads; zero uses the HPX default\n";
+    std::cout << "  --grain N       Pixels per HPX task; zero means one row per task\n";
     std::cout << "  --save FILE     Save the image as PPM\n";
     std::cout << "  --load FILE     Load a PPM image instead of generating it\n";
     std::cout << "  --display       Open the image in a separate window\n";
@@ -130,7 +131,8 @@ bool parse_arguments(int argc, char* argv[], AppOptions& options, std::string& e
             return false;
         }
 
-        if (arg == "--width" || arg == "--height" || arg == "--maxiter" || arg == "--threads") {
+        if (arg == "--width" || arg == "--height" || arg == "--maxiter" || arg == "--threads" ||
+            arg == "--grain") {
             if (i + 1 >= argc) {
                 error = "Missing value for " + arg;
                 return false;
@@ -144,6 +146,7 @@ bool parse_arguments(int argc, char* argv[], AppOptions& options, std::string& e
             if (arg == "--height") options.height = value;
             if (arg == "--maxiter") options.max_iter = value;
             if (arg == "--threads") options.threads = value;
+            if (arg == "--grain") options.grain = value;
             continue;
         }
 
@@ -212,6 +215,10 @@ bool validate_arguments(const AppOptions& options, std::string& error) {
     }
     if (options.threads < 0) {
         error = "threads must be zero or greater";
+        return false;
+    }
+    if (options.grain < 0) {
+        error = "grain must be zero or greater";
         return false;
     }
     if (options.grayscale && options.gradient) {

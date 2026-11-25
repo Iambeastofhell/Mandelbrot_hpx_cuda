@@ -13,24 +13,24 @@ def load(path):
     times = defaultdict(list)
     with open(path) as file:
         for row in csv.DictReader(file):
-            key = tuple(row[name] for name in CONFIG) + (row["impl"], row["threads"])
+            key = tuple(row[name] for name in CONFIG) + (row["impl"], row["threads"], row["grain"])
             times[key].append(float(row["seconds"]))
     return times
 
 
 def print_suite(suite, times):
     print(f"### {suite}\n")
-    print("| Size | Max iter | Color | View | Threads | Sequential (s) | HPX min (s) | HPX median (s) | HPX max (s) | Speedup | Efficiency |")
-    print("|---|---|---|---|---|---|---|---|---|---|---|")
-    for key in sorted(times, key=lambda k: (k[1:6], int(k[7]))):
+    print("| Size | Max iter | Color | View | Threads | Grain | Sequential (s) | HPX min (s) | HPX median (s) | HPX max (s) | Speedup | Efficiency |")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|")
+    for key in sorted(times, key=lambda k: (k[1:6], int(k[7]), int(k[8]))):
         if key[0] != suite or key[6] != "hpx":
             continue
-        _, width, height, maxiter, color, view, _, threads = key
+        _, width, height, maxiter, color, view, _, threads, grain = key
         runs = times[key]
-        sequential = statistics.median(times[key[:6] + ("sequential", "0")])
+        sequential = statistics.median(times[key[:6] + ("sequential", "0", "0")])
         median = statistics.median(runs)
         speedup = sequential / median
-        print(f"| {width}x{height} | {maxiter} | {color} | {view} | {threads} | {sequential:.4f} | "
+        print(f"| {width}x{height} | {maxiter} | {color} | {view} | {threads} | {grain if grain != "0" else "row"} | {sequential:.4f} | "
               f"{min(runs):.4f} | {median:.4f} | {max(runs):.4f} | {speedup:.2f}x | {speedup / int(threads):.0%} |")
     print()
 

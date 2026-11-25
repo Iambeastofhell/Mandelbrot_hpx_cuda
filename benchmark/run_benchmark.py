@@ -14,11 +14,11 @@ MAX_THREADS = os.cpu_count()
 FULL_VIEW = ("-2.0", "1.0", "-1.5", "1.5")
 ZOOM_VIEW = ("-1.35", "-1.2", "-0.1", "0.05")
 
-FIELDS = ["suite", "impl", "threads", "width", "height", "maxiter", "color", "view", "run", "seconds"]
+FIELDS = ["suite", "impl", "threads", "grain", "width", "height", "maxiter", "color", "view", "run", "seconds"]
 
 
-def case(suite, impl, threads=0, size=(1920, 1080), maxiter=500, color="gradient", view="full"):
-    return dict(suite=suite, impl=impl, threads=threads, width=size[0], height=size[1],
+def case(suite, impl, threads=0, size=(1920, 1080), maxiter=500, color="gradient", view="full", grain=0):
+    return dict(suite=suite, impl=impl, threads=threads, grain=grain, width=size[0], height=size[1],
                 maxiter=maxiter, color=color, view=view)
 
 
@@ -38,6 +38,11 @@ def suites():
                     for color in ("blackwhite", "grayscale", "gradient")
                     for impl, threads in (("sequential", 0), ("hpx", MAX_THREADS))]
 
+    pixels = 1024 * 1024
+    grains = sorted({1, 16, 256, 1024, 4096, 16384, 65536, pixels // MAX_THREADS})
+    yield "grain", [case("grain", "sequential", size=(1024, 1024))] + \
+                   [case("grain", "hpx", MAX_THREADS, (1024, 1024), grain=grain) for grain in grains]
+
     yield "view", [case("view", impl, threads, (1024, 1024), view=view)
                    for view in ("full", "zoom")
                    for impl, threads in (("sequential", 0), ("hpx", MAX_THREADS))]
@@ -54,6 +59,8 @@ def command(spec, binaries):
         args.append("--" + spec["color"])
     if spec["impl"] == "hpx":
         args += ["--threads", str(spec["threads"])]
+        if spec["grain"]:
+            args += ["--grain", str(spec["grain"])]
     return args
 
 

@@ -3,24 +3,29 @@
 #include <hpx/future.hpp>
 #include <hpx/hpx_init.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <string>
 #include <vector>
 
 static void generate_mandelbrot(const AppOptions& options, Image& image) {
-    std::vector<hpx::future<void>> rows;
-    rows.reserve(static_cast<std::size_t>(options.height));
+    int total = options.width * options.height;
+    int grain = options.grain > 0 ? options.grain : options.width;
 
-    for (int y = 0; y < options.height; ++y) {
-        rows.push_back(hpx::async([&options, &image, y]() {
-            for (int x = 0; x < options.width; ++x) {
-                image.at(x, y) = render_pixel(options, x, y);
+    std::vector<hpx::future<void>> tasks;
+    tasks.reserve(static_cast<std::size_t>((total + grain - 1) / grain));
+
+    for (int begin = 0; begin < total; begin += grain) {
+        int end = std::min(begin + grain, total);
+        tasks.push_back(hpx::async([&options, &image, begin, end]() {
+            for (int i = begin; i < end; ++i) {
+                image.pixels[i] = render_pixel(options, i % options.width, i / options.width);
             }
         }));
     }
 
-    hpx::wait_all(rows);
+    hpx::wait_all(tasks);
 }
 
 static int run(const AppOptions& options) {
