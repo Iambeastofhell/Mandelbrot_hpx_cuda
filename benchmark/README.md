@@ -30,7 +30,10 @@ python3 benchmark/make_tables.py /tmp/threads.csv
 | threads | 1, 2, 4, ... up to the CPU count | 1920x1080, 500 iterations, gradient |
 | iterations | 100, 500, 1000, 2000 | 1024x1024, gradient, all threads |
 | color | black and white, grayscale, gradient | 1024x1024, 500 iterations, all threads |
+| grain | pixels per HPX task, from 1 up to a static split | 1024x1024, 500 iterations, gradient, all threads |
 | view | full set, zoomed region | 1024x1024, 500 iterations, gradient, all threads |
+
+In the grain suite, the grain is the number of consecutive pixels in one task. A grain of 1024 on a 1024 wide image is one task per row, and the last grain is one equal block per thread. The table shows `row` when `--grain` is not given.
 
 The full view is x from -2.0 to 1.0 and y from -1.5 to 1.5. The zoomed view is x from -1.35 to -1.2 and y from -0.1 to 0.05.
 

@@ -74,6 +74,7 @@ This needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. The Makefile targ
 | `--grayscale` | Use a grayscale color scheme | Off |
 | `--gradient` | Use a gradient color scheme | Off |
 | `--threads N` | HPX worker threads | HPX default |
+| `--grain N` | Pixels per HPX task, zero means one row | 0 |
 | `--save FILE` | Save the result as a PPM P6 image | None |
 | `--load FILE` | Load a PPM P6 image instead of generating | None |
 | `--display` | Open the result using the system image viewer | Off |
@@ -110,7 +111,7 @@ Width and height must be greater than zero. The minimum coordinate must be less 
   --display
 ```
 
-Using `--threads 8` asks the HPX runtime to use eight worker threads. The workers take rows from a shared pool as they become free. HPX does not allow more threads than the machine has CPUs. In the sequential program, `--threads` is accepted but ignored.
+Using `--threads 8` asks the HPX runtime to use eight worker threads. The workers take tasks from a shared pool as they become free. `--grain N` changes how many pixels each task covers. HPX does not allow more threads than the machine has CPUs. In the sequential program, `--threads` is accepted but ignored.
 
 ## CUDA example
 

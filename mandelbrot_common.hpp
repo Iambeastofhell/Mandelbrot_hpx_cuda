@@ -30,6 +30,7 @@ struct AppOptions {
     double ymax = 1.5;
     int max_iter = 100;
     int threads = 0;
+    int grain = 0;
     bool grayscale = false;
     bool gradient = false;
     bool display = false;
