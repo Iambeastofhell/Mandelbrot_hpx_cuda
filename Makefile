@@ -18,15 +18,19 @@ HPX_SOURCE := CPU_hpx.cpp
 CUDA_SOURCE := GPU_cuda.cu
 HPX_CUDA_SOURCE := GPU_hpx_cuda.cpp
 HPX_CUDA_KERNEL := GPU_hpx_cuda_kernel.cu
+HPX_CUDA_OPT_SOURCE := GPU_hpx_cuda_opt.cpp
+HPX_CUDA_STREAM_KERNEL := GPU_hpx_cuda_stream.cu
 SEQUENTIAL_TARGET := $(BUILD_DIR)/mandelbrot_sequential
 HPX_TARGET := $(BUILD_DIR)/mandelbrot_hpx
 CUDA_TARGET := $(BUILD_DIR)/mandelbrot_cuda
 HPX_CUDA_TARGET := $(BUILD_DIR)/mandelbrot_hpx_cuda
 HPX_CUDA_KERNEL_OBJ := $(BUILD_DIR)/GPU_hpx_cuda_kernel.o
+HPX_CUDA_OPT_TARGET := $(BUILD_DIR)/mandelbrot_hpx_cuda_opt
+HPX_CUDA_STREAM_KERNEL_OBJ := $(BUILD_DIR)/GPU_hpx_cuda_stream.o
 
-.PHONY: all sequential hpx cuda hpx-cuda clean check run-hpx run-seq run-cuda run-hpx-cuda benchmark
+.PHONY: all sequential hpx cuda hpx-cuda hpx-cuda-opt clean check run-hpx run-seq run-cuda run-hpx-cuda run-hpx-cuda-opt benchmark
 
-all: sequential hpx hpx-cuda
+all: sequential hpx hpx-cuda hpx-cuda-opt
 
 $(BUILD_DIR) $(OUTPUT_DIR):
 	mkdir -p $@
@@ -41,6 +45,12 @@ hpx-cuda: $(BUILD_DIR) $(HPX_CUDA_KERNEL_OBJ)
 	$(CXX) $(CXXFLAGS) -I$(CUDA_INC) -L$(CUDA_LIB) $(HPX_CUDA_SOURCE) $(COMMON_SOURCE) $(HPX_CUDA_KERNEL_OBJ) -o $(HPX_CUDA_TARGET) -lcudart -lpthread
 
 $(HPX_CUDA_KERNEL_OBJ): $(HPX_CUDA_KERNEL) $(BUILD_DIR)
+	$(NVCC) -std=c++17 -O3 --fmad=false -arch=$(CUDA_ARCH) -c $< -o $@
+
+hpx-cuda-opt: $(BUILD_DIR) $(HPX_CUDA_STREAM_KERNEL_OBJ)
+	$(CXX) $(CXXFLAGS) -I$(CUDA_INC) -L$(CUDA_LIB) $(HPX_CUDA_OPT_SOURCE) $(COMMON_SOURCE) $(HPX_CUDA_STREAM_KERNEL_OBJ) -o $(HPX_CUDA_OPT_TARGET) -lcudart -lpthread
+
+$(HPX_CUDA_STREAM_KERNEL_OBJ): $(HPX_CUDA_STREAM_KERNEL) $(BUILD_DIR)
 	$(NVCC) -std=c++17 -O3 --fmad=false -arch=$(CUDA_ARCH) -c $< -o $@
 
 cuda: $(BUILD_DIR)
@@ -58,10 +68,13 @@ run-hpx: hpx $(OUTPUT_DIR)
 run-hpx-cuda: hpx-cuda $(OUTPUT_DIR)
 	./$(HPX_CUDA_TARGET) --width 1920 --height 1080 --maxiter 500 --gradient --threads 8 --save $(OUTPUT_DIR)/mandelbrot_hpx_cuda.ppm
 
+run-hpx-cuda-opt: hpx-cuda-opt $(OUTPUT_DIR)
+	./$(HPX_CUDA_OPT_TARGET) --width 1920 --height 1080 --maxiter 500 --gradient --threads 8 --save $(OUTPUT_DIR)/mandelbrot_hpx_cuda_opt.ppm
+
 run-cuda: cuda $(OUTPUT_DIR)
 	./$(CUDA_TARGET) --width 1920 --height 1080 --maxiter 500 --gradient --save $(OUTPUT_DIR)/mandelbrot_cuda.ppm
 
-benchmark: all hpx-cuda
+benchmark: all
 	python3 benchmark/run_benchmark.py
 	python3 benchmark/make_tables.py > benchmark/results.md
 

@@ -78,4 +78,14 @@ __global__ void mandelbrot_rows(Pixel* pixels, MandelbrotView view, int row_begi
     }
 }
 
+// Chunk version: pixels points at start of chunk (row_begin * width)
+__global__ void mandelbrot_rows_chunk(Pixel* pixels, MandelbrotView view, int row_begin, int row_end) {
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = row_begin + blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (x < view.width && y < row_end) {
+        pixels[(y - row_begin) * view.width + x] = mandelbrot_pixel(view, x, y);
+    }
+}
+
 #endif
