@@ -16,6 +16,8 @@ Implementation of HPX applications for Mandelbrot set generation, compared with 
 - `mandelbrot_sequential` uses a normal nested CPU loop.
 - `mandelbrot_hpx` splits the image into HPX tasks, one per row by default.
 - `mandelbrot_cuda` runs one CUDA thread per pixel.
+- `mandelbrot_hpx_cuda` uses std::thread to launch CUDA kernels per image chunk.
+- `mandelbrot_hpx_cuda_opt` uses persistent CUDA streams for overlap.
 - All programs use the same pixel mapping, colors, PPM format, and command line options.
 
 ## Build
@@ -53,6 +55,15 @@ make cuda
 ```
 
 This needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. The Makefile targets the installed GPU. To build for another one, set the architecture, for example `make cuda CUDA_ARCH=sm_80`. It is not part of `make all`.
+
+Build the hybrid implementations (std::thread + CUDA):
+
+```bash
+make hpx-cuda       # basic hybrid
+make hpx-cuda-opt   # optimized with CUDA streams
+```
+
+These need `nvcc` and an NVIDIA GPU. They are part of `make all`.
 
 Remove generated executables, temporary test files, and the `output` directory:
 
@@ -128,6 +139,26 @@ The pixel code is in `mandelbrot_kernel.cuh`. It repeats the CPU code in `mandel
 ```bash
 cmp output/mandelbrot_cuda.ppm output/mandelbrot_seq.ppm
 ```
+
+## Hybrid examples
+
+```bash
+./build/mandelbrot_hpx_cuda \
+  --width 1920 --height 1080 \
+  --maxiter 500 --gradient \
+  --threads 8 \
+  --save mandelbrot_hpx_cuda.ppm
+```
+
+```bash
+./build/mandelbrot_hpx_cuda_opt \
+  --width 1920 --height 1080 \
+  --maxiter 500 --gradient \
+  --threads 8 \
+  --save mandelbrot_hpx_cuda_opt.ppm
+```
+
+Both split the image into chunks and launch a CUDA kernel per chunk from a thread pool. The optimized version keeps device memory and streams alive across tasks to overlap kernel execution with memory copies. `--grain N` controls chunk size (default: 1/8 of image). Images match the CPU versions.
 
 ## Save and display combinations
 

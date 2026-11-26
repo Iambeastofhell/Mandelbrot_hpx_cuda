@@ -1,6 +1,6 @@
 # Benchmark
 
-Compares the sequential program with the HPX program. Only the Mandelbrot generation is timed. Saving the image is not included.
+Compares the sequential program with the HPX program and the hybrid CUDA versions. Only the Mandelbrot generation is timed. Saving the image is not included.
 
 ## Running
 
@@ -8,7 +8,7 @@ Compares the sequential program with the HPX program. Only the Mandelbrot genera
 make benchmark
 ```
 
-This builds both programs, runs every case five times, and writes:
+This builds all programs, runs every case five times, and writes:
 
 - `benchmark/results.csv`: one row per run
 - `benchmark/results.md`: median, min and max per case, with speedup and efficiency
@@ -20,7 +20,7 @@ python3 benchmark/run_benchmark.py --suite threads --runs 10 --out /tmp/threads.
 python3 benchmark/make_tables.py /tmp/threads.csv
 ```
 
-`--sequential` and `--hpx` take the paths of other executables, which makes it easy to compare a new variant against the baseline.
+`--sequential`, `--hpx`, `--cuda`, `--hpx-cuda`, and `--hpx-cuda-opt` take the paths of other executables, which makes it easy to compare a new variant against the baseline.
 
 ## Suites
 
@@ -56,10 +56,16 @@ Environment: Fedora 43, g++ 15.3.1 with `-O3 -std=c++17`, HPX 1.11.0 installed f
 
 ## Correctness check
 
-Both programs must produce identical files:
+All programs must produce identical files:
 
 ```bash
 ./build/mandelbrot_sequential --width 1920 --height 1080 --maxiter 500 --gradient --save /tmp/seq.ppm
 ./build/mandelbrot_hpx --width 1920 --height 1080 --maxiter 500 --gradient --save /tmp/hpx.ppm
+./build/mandelbrot_cuda --width 1920 --height 1080 --maxiter 500 --gradient --save /tmp/cuda.ppm
+./build/mandelbrot_hpx_cuda --width 1920 --height 1080 --maxiter 500 --gradient --save /tmp/hpx_cuda.ppm
+./build/mandelbrot_hpx_cuda_opt --width 1920 --height 1080 --maxiter 500 --gradient --save /tmp/hpx_cuda_opt.ppm
 cmp /tmp/seq.ppm /tmp/hpx.ppm
+cmp /tmp/seq.ppm /tmp/cuda.ppm
+cmp /tmp/seq.ppm /tmp/hpx_cuda.ppm
+cmp /tmp/seq.ppm /tmp/hpx_cuda_opt.ppm
 ```
