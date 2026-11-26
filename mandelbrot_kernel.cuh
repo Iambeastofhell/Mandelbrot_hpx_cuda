@@ -1,7 +1,7 @@
 #ifndef MANDELBROT_KERNEL_CUH
 #define MANDELBROT_KERNEL_CUH
 
-#include "mandelbrot_common.hpp"
+#include "mandelbrot_kernel.h"
 
 #include <cuda_runtime.h>
 
@@ -10,27 +10,6 @@
 
 // The pixel code below repeats mandelbrot_common.cpp so that it can run on the GPU.
 // Keep the two in sync. Build with --fmad=false so both give identical pixels.
-
-enum ColorMode { BLACK_AND_WHITE, GRAYSCALE, GRADIENT };
-
-struct MandelbrotView {
-    int width;
-    int height;
-    int max_iter;
-    ColorMode color;
-    double xmin;
-    double xmax;
-    double ymin;
-    double ymax;
-};
-
-inline MandelbrotView make_view(const AppOptions& options) {
-    ColorMode color = options.gradient ? GRADIENT
-                    : options.grayscale ? GRAYSCALE
-                    : BLACK_AND_WHITE;
-    return {options.width, options.height, options.max_iter, color,
-            options.xmin, options.xmax, options.ymin, options.ymax};
-}
 
 inline void cuda_check(cudaError_t status) {
     if (status != cudaSuccess) {
