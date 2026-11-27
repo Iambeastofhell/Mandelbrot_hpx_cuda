@@ -7,17 +7,18 @@
 
 static void render(const Options& options, std::vector<int>& counts) {
     const View& view = options.view;
-    int total = view.width * view.height;
-    int grain = options.grain > 0 ? options.grain : view.width;
+    const Rect& area = view.area;
+    int total = area.width * area.height;
+    int grain = options.grain > 0 ? options.grain : area.width;
 
     std::vector<hpx::future<void>> tasks;
     tasks.reserve(static_cast<std::size_t>((total + grain - 1) / grain));
 
     for (int begin = 0; begin < total; begin += grain) {
         int end = std::min(begin + grain, total);
-        tasks.push_back(hpx::async([&view, &counts, begin, end]() {
+        tasks.push_back(hpx::async([&view, &area, &counts, begin, end]() {
             for (int i = begin; i < end; ++i) {
-                counts[i] = pixel_count(view, i % view.width, i / view.width);
+                counts[i] = pixel_count(view, area.left + i % area.width, area.top + i / area.width);
             }
         }));
     }

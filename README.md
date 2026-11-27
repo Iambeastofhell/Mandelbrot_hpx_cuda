@@ -16,7 +16,7 @@ Implementation of HPX applications for Mandelbrot set generation, compared with 
 - `mandelbrot_sequential` uses a normal nested CPU loop.
 - `mandelbrot_hpx` splits the image into HPX tasks, one per row by default.
 - `mandelbrot_cuda` runs one CUDA thread per pixel.
-- All programs use the same pixel mapping, colors, PPM format, and command line options.
+- All programs use the same pixel mapping, colors, file formats, and command line options.
 
 ## Versions
 
@@ -34,148 +34,66 @@ Implementation of HPX applications for Mandelbrot set generation, compared with 
 
 A C++17 compiler is required.
 
-Build the sequential implementation:
-
 ```bash
+make              # sequential and HPX renderers
 make sequential
-```
-
-Build the CPU implementations:
-
-```bash
-make
-```
-
-Build the HPX implementation:
-
-```bash
 make hpx
-```
-
-The HPX build needs an installed HPX. It looks in `/usr` by default. For another install, such as a local build of the submodule, pass its prefix:
-
-```bash
-make hpx HPX_PREFIX=$PWD/hpx/install
-```
-
-Build the CUDA implementation:
-
-```bash
 make cuda
+make clean        # removes build/
 ```
 
-This needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. The Makefile targets the installed GPU. To build for another one, set the architecture, for example `make cuda CUDA_ARCH=sm_80`. It is not part of `make all`.
+The HPX build needs an installed HPX. It looks in `/usr` by default. For another install, such as a local build of the submodule, pass its prefix with `make hpx HPX_PREFIX=/path/to/hpx`.
 
-Remove generated executables:
+The CUDA build needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. It targets the installed GPU. To build for another one, set the architecture, for example `make cuda CUDA_ARCH=sm_80`.
+
+## Run
 
 ```bash
-make clean
+./build/mandelbrot_sequential --save full.ppm
+./build/mandelbrot_hpx --center -0.745 0.113 --view-width 0.01 --maxiter 2000 --threads 8 --save seahorse.ppm
+./build/mandelbrot_cuda --width 1920 --height 1080 --save full.ppm
 ```
-
-## Inputs
 
 | Option | Description | Default |
 |---|---|---|
-| `--width W` | Output image width | 80 |
-| `--height H` | Output image height | 40 |
-| `--xmin X` | Minimum real coordinate | -2.0 |
-| `--xmax X` | Maximum real coordinate | 1.0 |
-| `--ymin Y` | Minimum imaginary coordinate | -1.5 |
-| `--ymax Y` | Maximum imaginary coordinate | 1.5 |
-| `--maxiter N` | Maximum escape iterations | 100 |
-| `--grayscale` | Use a grayscale color scheme | Off |
-| `--gradient` | Use a gradient color scheme | Off |
-| `--threads N` | HPX worker threads | HPX default |
-| `--grain N` | Pixels per HPX task, zero means one row | 0 |
-| `--save FILE` | Save the result as a PPM P6 image | None |
-| `--load FILE` | Load a PPM P6 image instead of generating | None |
-| `--display` | Open the result using the system image viewer | Off |
-| `--help` | Print usage information | None |
-
-The default color mode is black and white. Use only one of `--grayscale` or `--gradient`.
-
-Width and height must be greater than zero. The minimum coordinate must be less than the maximum coordinate on both axes. Maximum iterations must be greater than zero.
+| `--center X Y` | Point at the center of the image | -0.5 0 |
+| `--view-width W` | Width of the view on the real axis | 3 |
+| `--width N` | Image width in pixels | 1024 |
+| `--height N` | Image height in pixels | 768 |
+| `--maxiter N` | Iteration limit | 500 |
+| `--color NAME` | `bw`, `gray` or `gradient` | `gradient` |
+| `--save FILE` | Save the image as PPM | None |
+| `--counts FILE` | Save the escape counts as raw 32-bit integers | None |
+| `--threads N` | HPX worker threads, at most the number of CPUs | Chosen by HPX |
+| `--grain N` | Pixels per HPX task, 0 for one row | 0 |
+| `--help` | Print usage information | |
 
 `--threads` and `--grain` only affect HPX. Other programs accept and ignore them.
 
-## Sequential example
+Each program prints its generation time, which covers computing the escape counts. Coloring and saving are not included. The CUDA time includes allocating device memory and copying the results back, but not starting the CUDA runtime.
+
+## Pixel grid
+
+Pixels lie on a grid fixed to the complex plane. The spacing is the view width divided by the image width, the same on both axes, and the center is rounded to the nearest grid point. A point therefore has exactly the same value in every view with the same spacing.
+
+The view width can be at most 16, and the spacing at least 1e-15, near the limit of `double`.
+
+## Comparing results
+
+The CPU and GPU programs share the pixel code in `src/mandelbrot.hpp`, and the Makefile stops both compilers from fusing multiplications and additions. The counts should be identical:
 
 ```bash
-./build/mandelbrot_sequential \
-  --width 1920 --height 1080 \
-  --xmin -2.0 --xmax 1.0 \
-  --ymin -1.5 --ymax 1.5 \
-  --maxiter 500 \
-  --gradient \
-  --save mandelbrot_sequential.ppm \
-  --display
+./build/mandelbrot_sequential --counts sequential.bin
+./build/mandelbrot_hpx --counts hpx.bin
+cmp sequential.bin hpx.bin
 ```
-
-## HPX example
-
-```bash
-./build/mandelbrot_hpx \
-  --width 1920 --height 1080 \
-  --xmin -2.0 --xmax 1.0 \
-  --ymin -1.5 --ymax 1.5 \
-  --maxiter 500 \
-  --threads 8 \
-  --gradient \
-  --save mandelbrot_hpx.ppm \
-  --display
-```
-
-Using `--threads 8` asks the HPX runtime to use eight worker threads. The workers take tasks from a shared pool as they become free. `--grain N` changes how many pixels each task covers. HPX does not allow more threads than the machine has CPUs.
-
-## CUDA example
-
-```bash
-./build/mandelbrot_cuda --width 1920 --height 1080 --maxiter 500 --gradient --save mandelbrot_cuda.ppm
-```
-
-The generation time includes allocating device memory and copying the results back to the host. Starting the CUDA runtime is not counted.
-
-The CPU and GPU programs share the pixel code in `src/mandelbrot.hpp`. The Makefile stops both compilers from fusing multiplications and additions, so the images should be identical:
-
-```bash
-./build/mandelbrot_sequential --width 1920 --height 1080 --maxiter 500 --gradient --save mandelbrot_sequential.ppm
-cmp mandelbrot_cuda.ppm mandelbrot_sequential.ppm
-```
-
-## Save and display combinations
-
-Save only:
-
-```bash
-./build/mandelbrot_hpx --width 1024 --height 1024 --save output.ppm
-```
-
-Display only:
-
-```bash
-./build/mandelbrot_hpx --width 1024 --height 1024 --gradient --display
-```
-
-Save and display:
-
-```bash
-./build/mandelbrot_hpx --width 1024 --height 1024 --save output.ppm --display
-```
-
-Load and display:
-
-```bash
-./build/mandelbrot_sequential --load output.ppm --display
-```
-
-Any of the programs can load a PPM file. Loading does not run Mandelbrot generation.
 
 ## Source layout
 
 | File | Contents |
 |---|---|
-| `src/mandelbrot.hpp` | Pixel mapping and escape count, used on the CPU and the GPU |
-| `src/app.hpp`, `src/app.cpp` | Command line options, colors, timing and PPM files |
+| `src/mandelbrot.hpp` | Pixel grid and escape count, used on the CPU and the GPU |
+| `src/app.hpp`, `src/app.cpp` | Command line options, colors, timing and output files |
 | `src/sequential.cpp` | Sequential renderer |
 | `src/hpx.cpp` | HPX renderer |
 | `src/cuda.cu` | CUDA renderer |

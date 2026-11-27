@@ -12,21 +12,21 @@ struct Pixel {
     unsigned char b;
 };
 
-struct Image {
-    int width;
-    int height;
-    std::vector<Pixel> pixels;
-};
+enum class Color { black_and_white, grayscale, gradient };
 
 struct Options {
-    View view{80, 40, 100, -2.0, 1.0, -1.5, 1.5};
+    double center_x = -0.5;
+    double center_y = 0.0;
+    double view_width = 3.0;
+    int width = 1024;
+    int height = 768;
+    int max_iter = 500;
+    Color color = Color::gradient;
     int threads = 0;
     int grain = 0;
-    bool grayscale = false;
-    bool gradient = false;
-    bool display = false;
     std::string save_file;
-    std::string load_file;
+    std::string counts_file;
+    View view{};  // built from the values above
 };
 
 // Fills counts with one escape count per pixel, row by row.
@@ -35,7 +35,12 @@ using Renderer = void (*)(const Options& options, std::vector<int>& counts);
 // Exits the program for --help or an invalid argument.
 Options parse_options(int argc, char* argv[]);
 
-// Renders or loads the image, then saves and displays it as requested.
+Pixel color_pixel(int count, int max_iter, Color color);
+
+// Writes the files requested by --save and --counts.
+bool save_results(const Options& options, const std::vector<int>& counts);
+
+// Times the renderer and saves its results. Returns the exit status.
 int run(const Options& options, const char* name, Renderer render);
 
 #endif
