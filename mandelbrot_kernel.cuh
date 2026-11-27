@@ -1,7 +1,7 @@
 #ifndef MANDELBROT_KERNEL_CUH
 #define MANDELBROT_KERNEL_CUH
 
-#include "mandelbrot_kernel.h"
+#include "mandelbrot_common.hpp"
 
 #include <cuda_runtime.h>
 
@@ -10,6 +10,27 @@
 
 // The pixel code below repeats mandelbrot_common.cpp so that it can run on the GPU.
 // Keep the two in sync. Build with --fmad=false so both give identical pixels.
+
+enum ColorMode { BLACK_AND_WHITE, GRAYSCALE, GRADIENT };
+
+struct MandelbrotView {
+    int width;
+    int height;
+    int max_iter;
+    ColorMode color;
+    double xmin;
+    double xmax;
+    double ymin;
+    double ymax;
+};
+
+inline MandelbrotView make_view(const AppOptions& options) {
+    ColorMode color = options.gradient ? GRADIENT
+                    : options.grayscale ? GRAYSCALE
+                    : BLACK_AND_WHITE;
+    return {options.width, options.height, options.max_iter, color,
+            options.xmin, options.xmax, options.ymin, options.ymax};
+}
 
 inline void cuda_check(cudaError_t status) {
     if (status != cudaSuccess) {
@@ -75,16 +96,6 @@ __global__ void mandelbrot_rows(Pixel* pixels, MandelbrotView view, int row_begi
 
     if (x < view.width && y < row_end) {
         pixels[y * view.width + x] = mandelbrot_pixel(view, x, y);
-    }
-}
-
-// Chunk version: pixels points at start of chunk (row_begin * width)
-__global__ void mandelbrot_rows_chunk(Pixel* pixels, MandelbrotView view, int row_begin, int row_end) {
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = row_begin + blockIdx.y * blockDim.y + threadIdx.y;
-
-    if (x < view.width && y < row_end) {
-        pixels[(y - row_begin) * view.width + x] = mandelbrot_pixel(view, x, y);
     }
 }
 

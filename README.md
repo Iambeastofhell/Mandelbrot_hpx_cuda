@@ -16,9 +16,19 @@ Implementation of HPX applications for Mandelbrot set generation, compared with 
 - `mandelbrot_sequential` uses a normal nested CPU loop.
 - `mandelbrot_hpx` splits the image into HPX tasks, one per row by default.
 - `mandelbrot_cuda` runs one CUDA thread per pixel.
-- `mandelbrot_hpx_cuda` launches one CUDA kernel per row strip from HPX tasks.
-- `mandelbrot_hpx_cuda_opt` gives each HPX task its own CUDA stream and reuses its device memory.
 - All programs use the same pixel mapping, colors, PPM format, and command line options.
+
+## Versions
+
+| Version | Description | Compared with |
+|---|---|---|
+| 1 | Sequential CPU renderer, the reference for correctness and time | |
+| 2 | HPX renderer with one task per pixel, row or fixed-size tile, and parallel loops with different chunk sizes | 1 |
+| 3 | HPX renderer that checks tile borders to skip work, with a tree of futures | Best of 2 |
+| 4a | Live explorer that draws tiles as they finish, cancels old work and recomputes everything | 3 |
+| 4b | Live explorer that reuses earlier work | 4a |
+| 5 | CUDA renderer that computes every pixel on the GPU | 3 |
+| 6 | Version 3 with small non-uniform tiles computed by GPU kernels | 3 and 5 |
 
 ## Build
 
@@ -56,16 +66,7 @@ make cuda
 
 This needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. The Makefile targets the installed GPU. To build for another one, set the architecture, for example `make cuda CUDA_ARCH=sm_80`. It is not part of `make all`.
 
-Build the HPX CUDA implementations:
-
-```bash
-make hpx-cuda
-make hpx-cuda-opt
-```
-
-These need HPX, the CUDA toolkit and an NVIDIA GPU. They are not part of `make all`.
-
-Remove generated executables, temporary test files, and the `output` directory:
+Remove generated executables:
 
 ```bash
 make clean
@@ -137,30 +138,9 @@ It prints two times. The kernel time covers only the GPU computation. The genera
 The pixel code is in `mandelbrot_kernel.cuh`. It repeats the CPU code in `mandelbrot_common.cpp`, and the Makefile compiles it with `--fmad=false` so the GPU does not fuse multiplications and additions. With that, the image should be identical to the CPU one:
 
 ```bash
-cmp output/mandelbrot_cuda.ppm output/mandelbrot_seq.ppm
+./build/mandelbrot_sequential --width 1920 --height 1080 --maxiter 500 --gradient --save mandelbrot_sequential.ppm
+cmp mandelbrot_cuda.ppm mandelbrot_sequential.ppm
 ```
-
-## HPX CUDA examples
-
-```bash
-./build/mandelbrot_hpx_cuda \
-  --width 1920 --height 1080 \
-  --maxiter 500 --gradient \
-  --threads 8 \
-  --save mandelbrot_hpx_cuda.ppm
-```
-
-```bash
-./build/mandelbrot_hpx_cuda_opt \
-  --width 1920 --height 1080 \
-  --maxiter 500 --gradient \
-  --threads 8 \
-  --save mandelbrot_hpx_cuda_opt.ppm
-```
-
-The image is split into strips of whole rows. `--grain N` sets the strip size in pixels, rounded down to whole rows. The default is an eighth of the image.
-
-`mandelbrot_hpx_cuda` allocates device memory for every strip and each task waits for its copy to finish. `mandelbrot_hpx_cuda_opt` runs one task per stream. A task takes the next strip when its stream is done, and yields its worker thread while it waits. HPX does not need to be built with CUDA support.
 
 ## Save and display combinations
 
@@ -202,8 +182,3 @@ They include:
 - Command line parsing and validation
 - PPM loading and saving
 - Image display handling
-
-## Benchmark
-
-Benchmark instructions are in [benchmark/README.md](benchmark/README.md). The CUDA results from the cluster are in [benchmark/cuda_results.md](benchmark/cuda_results.md).
-
