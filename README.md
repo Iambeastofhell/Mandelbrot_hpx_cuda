@@ -159,7 +159,45 @@ cmp sequential.bin hpx.bin
 
 ## Benchmarks
 
-See [benchmark/README.md](benchmark/README.md).
+Measured on a Ryzen 7 7735HS (16 threads) and an RTX 3050 6GB Laptop GPU at 1920x1080. Each time is the median of five runs, in seconds.
+
+| Program | Whole set | Mostly inside the set | Fine edges |
+|---|---|---|---|
+| Sequential | 1.353 | 8.137 | 0.402 |
+| HPX, one task per row | 0.098 | 0.602 | 0.034 |
+| HPX, 64 pixel tiles | 0.102 | 0.591 | 0.032 |
+| HPX, parallel loop | 0.116 | 0.606 | 0.033 |
+| HPX, border method | 0.034 | 0.065 | 0.040 |
+| CUDA | 0.105 | 0.587 | 0.079 |
+
+Some interesting observations:
+
+- The border method is 2.9 times faster than the best of the other HPX methods on the whole set and 9 times faster on the view mostly inside the set. On fine edges it is 1.2 times slower.
+- One task per pixel took 0.95 s on the whole set, against 0.097 s for one task per row.
+- With 16 threads, one task per row is 13.9 times faster than sequential.
+- CUDA is level with the other HPX methods on the first two views and 2.5 times slower than the best of them on fine edges.
+- CUDA and the HPX methods other than the border method gave the same counts as sequential. The border method differed by at most one pixel.
+
+Explorer, total time for 32 pans and the number of tiles computed:
+
+| Explorer | Whole set | Fine edges |
+|---|---|---|
+| Without reuse | 1.88 s, 17190 tiles | 2.10 s, 17856 tiles |
+| With reuse | 1.15 s, 630 tiles | 1.18 s, 638 tiles |
+
+### Overall speedup
+
+| View | Version 3 over version 1 | Version 5 over version 1 | Version 3 over version 5 |
+|---|---|---|---|
+| Whole set | 39.7x | 12.9x | 3.1x |
+| Mostly inside the set | 124.8x | 13.9x | 9.0x |
+| Fine edges | 10.1x | 5.1x | 2.0x |
+
+The border method on 16 CPU threads is 10 to 125 times faster than the sequential program, and 2 to 9 times faster than CUDA on the same laptop.
+
+On the whole set it is 3.8 times faster than sequential even with a single thread, because it skips pixels. Using all the threads brings this to about 40 times.
+
+All results are in [benchmark/results.md](benchmark/results.md). [benchmark/README.md](benchmark/README.md) describes how to run them.
 
 ## Source layout
 
