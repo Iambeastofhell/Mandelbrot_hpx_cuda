@@ -133,9 +133,9 @@ Using `--threads 8` asks the HPX runtime to use eight worker threads. The worker
 ./build/mandelbrot_cuda --width 1920 --height 1080 --maxiter 500 --gradient --save mandelbrot_cuda.ppm
 ```
 
-It prints two times. The kernel time covers only the GPU computation. The generation time also includes allocating device memory and copying the image back to the host, which makes it the one to compare with the CPU programs. Starting the CUDA runtime is not counted in either.
+The generation time includes allocating device memory and copying the results back to the host. Starting the CUDA runtime is not counted.
 
-The pixel code is in `mandelbrot_kernel.cuh`. It repeats the CPU code in `mandelbrot_common.cpp`, and the Makefile compiles it with `--fmad=false` so the GPU does not fuse multiplications and additions. With that, the image should be identical to the CPU one:
+The CPU and GPU programs share the pixel code in `src/mandelbrot.hpp`. The Makefile stops both compilers from fusing multiplications and additions, so the images should be identical:
 
 ```bash
 ./build/mandelbrot_sequential --width 1920 --height 1080 --maxiter 500 --gradient --save mandelbrot_sequential.ppm
@@ -170,15 +170,12 @@ Load and display:
 
 Any of the programs can load a PPM file. Loading does not run Mandelbrot generation.
 
-## Shared code
+## Source layout
 
-Shared types and operations are in `mandelbrot_common.hpp` and `mandelbrot_common.cpp`.
-
-They include:
-
-- `Pixel` and `Image`
-- Escape iteration calculation
-- Black and white, grayscale, and gradient colors
-- Command line parsing and validation
-- PPM loading and saving
-- Image display handling
+| File | Contents |
+|---|---|
+| `src/mandelbrot.hpp` | Pixel mapping and escape count, used on the CPU and the GPU |
+| `src/app.hpp`, `src/app.cpp` | Command line options, colors, timing and PPM files |
+| `src/sequential.cpp` | Sequential renderer |
+| `src/hpx.cpp` | HPX renderer |
+| `src/cuda.cu` | CUDA renderer |

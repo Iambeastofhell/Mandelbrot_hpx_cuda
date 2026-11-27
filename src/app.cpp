@@ -1,49 +1,19 @@
-#include "mandelbrot_common.hpp"
+#include "app.hpp"
 
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
 
-Image::Image(int width_value, int height_value)
-    : width(width_value), height(height_value),
-      pixels(static_cast<std::size_t>(width_value) * static_cast<std::size_t>(height_value)) {}
-
-Pixel& Image::at(int x, int y) {
-    return pixels[static_cast<std::size_t>(y) * static_cast<std::size_t>(width) + static_cast<std::size_t>(x)];
-}
-
-const Pixel& Image::at(int x, int y) const {
-    return pixels[static_cast<std::size_t>(y) * static_cast<std::size_t>(width) + static_cast<std::size_t>(x)];
-}
-
-int mandelbrot(double cr, double ci, int max_iter) {
-    double zr = 0.0;
-    double zi = 0.0;
-    int iter = 0;
-
-    while (iter < max_iter) {
-        double zr2 = zr * zr;
-        double zi2 = zi * zi;
-        if (zr2 + zi2 > 4.0) {
-            break;
-        }
-        zi = 2.0 * zr * zi + ci;
-        zr = zr2 - zi2 + cr;
-        ++iter;
-    }
-
-    return iter;
-}
-
-Pixel color_black_and_white(int iter, int max_iter) {
+static Pixel color_black_and_white(int iter, int max_iter) {
     if (iter == max_iter) {
         return {0, 0, 0};
     }
     return {255, 255, 255};
 }
 
-Pixel color_grayscale(int iter, int max_iter) {
+static Pixel color_grayscale(int iter, int max_iter) {
     if (iter == max_iter) {
         return {0, 0, 0};
     }
@@ -53,7 +23,7 @@ Pixel color_grayscale(int iter, int max_iter) {
     return {gray, gray, gray};
 }
 
-Pixel color_gradient(int iter, int max_iter) {
+static Pixel color_gradient(int iter, int max_iter) {
     if (iter == max_iter) {
         return {0, 0, 0};
     }
@@ -65,28 +35,17 @@ Pixel color_gradient(int iter, int max_iter) {
     return {r, g, b};
 }
 
-Pixel render_pixel(const AppOptions& options, int x, int y) {
-    double cr = options.xmin;
-    if (options.width > 1) {
-        cr += (options.xmax - options.xmin) * x / (options.width - 1);
-    }
-
-    double ci = options.ymin;
-    if (options.height > 1) {
-        ci += (options.ymax - options.ymin) * y / (options.height - 1);
-    }
-
-    int iter = mandelbrot(cr, ci, options.max_iter);
+static Pixel color_pixel(const Options& options, int count) {
     if (options.gradient) {
-        return color_gradient(iter, options.max_iter);
+        return color_gradient(count, options.view.max_iter);
     }
     if (options.grayscale) {
-        return color_grayscale(iter, options.max_iter);
+        return color_grayscale(count, options.view.max_iter);
     }
-    return color_black_and_white(iter, options.max_iter);
+    return color_black_and_white(count, options.view.max_iter);
 }
 
-void print_usage(const char* program) {
+static void print_usage(const char* program) {
     std::cout << "Usage: " << program << " [options]\n";
     std::cout << "Options:\n";
     std::cout << "  --width W       Image width (default: 80)\n";
@@ -122,7 +81,7 @@ static bool parse_double(const char* text, double& value) {
     return end != text && *end == '\0';
 }
 
-bool parse_arguments(int argc, char* argv[], AppOptions& options, std::string& error) {
+static bool parse_arguments(int argc, char* argv[], Options& options, std::string& error) {
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
 
@@ -142,9 +101,9 @@ bool parse_arguments(int argc, char* argv[], AppOptions& options, std::string& e
                 error = "Invalid integer value for " + arg;
                 return false;
             }
-            if (arg == "--width") options.width = value;
-            if (arg == "--height") options.height = value;
-            if (arg == "--maxiter") options.max_iter = value;
+            if (arg == "--width") options.view.width = value;
+            if (arg == "--height") options.view.height = value;
+            if (arg == "--maxiter") options.view.max_iter = value;
             if (arg == "--threads") options.threads = value;
             if (arg == "--grain") options.grain = value;
             continue;
@@ -160,10 +119,10 @@ bool parse_arguments(int argc, char* argv[], AppOptions& options, std::string& e
                 error = "Invalid number value for " + arg;
                 return false;
             }
-            if (arg == "--xmin") options.xmin = value;
-            if (arg == "--xmax") options.xmax = value;
-            if (arg == "--ymin") options.ymin = value;
-            if (arg == "--ymax") options.ymax = value;
+            if (arg == "--xmin") options.view.xmin = value;
+            if (arg == "--xmax") options.view.xmax = value;
+            if (arg == "--ymin") options.view.ymin = value;
+            if (arg == "--ymax") options.view.ymax = value;
             continue;
         }
 
@@ -196,20 +155,20 @@ bool parse_arguments(int argc, char* argv[], AppOptions& options, std::string& e
     return true;
 }
 
-bool validate_arguments(const AppOptions& options, std::string& error) {
-    if (options.width <= 0 || options.height <= 0) {
+static bool validate_arguments(const Options& options, std::string& error) {
+    if (options.view.width <= 0 || options.view.height <= 0) {
         error = "Width and height must be greater than zero";
         return false;
     }
-    if (options.xmin >= options.xmax) {
+    if (options.view.xmin >= options.view.xmax) {
         error = "xmin must be less than xmax";
         return false;
     }
-    if (options.ymin >= options.ymax) {
+    if (options.view.ymin >= options.view.ymax) {
         error = "ymin must be less than ymax";
         return false;
     }
-    if (options.max_iter <= 0) {
+    if (options.view.max_iter <= 0) {
         error = "maxiter must be greater than zero";
         return false;
     }
@@ -232,7 +191,7 @@ bool validate_arguments(const AppOptions& options, std::string& error) {
     return true;
 }
 
-bool save_ppm(const Image& image, const std::string& filename) {
+static bool save_ppm(const Image& image, const std::string& filename) {
     std::FILE* file = std::fopen(filename.c_str(), "wb");
     if (!file) {
         std::cerr << "Error: could not open " << filename << " for writing\n";
@@ -240,12 +199,9 @@ bool save_ppm(const Image& image, const std::string& filename) {
     }
 
     std::fprintf(file, "P6\n%d %d\n255\n", image.width, image.height);
-    for (int y = 0; y < image.height; ++y) {
-        for (int x = 0; x < image.width; ++x) {
-            const Pixel& pixel = image.at(x, y);
-            unsigned char bytes[3] = {pixel.r, pixel.g, pixel.b};
-            std::fwrite(bytes, 1, 3, file);
-        }
+    for (const Pixel& pixel : image.pixels) {
+        unsigned char bytes[3] = {pixel.r, pixel.g, pixel.b};
+        std::fwrite(bytes, 1, 3, file);
     }
 
     if (std::fclose(file) != 0) {
@@ -267,19 +223,19 @@ static void skip_ppm_header_whitespace(std::FILE* file) {
     }
 }
 
-Image load_ppm(const std::string& filename, bool& success) {
+static Image load_ppm(const std::string& filename, bool& success) {
     success = false;
     std::FILE* file = std::fopen(filename.c_str(), "rb");
     if (!file) {
         std::cerr << "Error: could not open " << filename << " for reading\n";
-        return Image(0, 0);
+        return {};
     }
 
     char magic[2];
     if (std::fread(magic, 1, 2, file) != 2 || magic[0] != 'P' || magic[1] != '6') {
         std::cerr << "Error: " << filename << " is not a PPM P6 file\n";
         std::fclose(file);
-        return Image(0, 0);
+        return {};
     }
 
     skip_ppm_header_whitespace(file);
@@ -291,14 +247,14 @@ Image load_ppm(const std::string& filename, bool& success) {
         width <= 0 || height <= 0 || max_value != 255) {
         std::cerr << "Error: invalid PPM header in " << filename << '\n';
         std::fclose(file);
-        return Image(0, 0);
+        return {};
     }
 
     int separator = std::fgetc(file);
     if (separator != ' ' && separator != '\t' && separator != '\n' && separator != '\r') {
         std::cerr << "Error: invalid PPM header in " << filename << '\n';
         std::fclose(file);
-        return Image(0, 0);
+        return {};
     }
     if (separator == '\r') {
         int next_character = std::fgetc(file);
@@ -307,17 +263,15 @@ Image load_ppm(const std::string& filename, bool& success) {
         }
     }
 
-    Image image(width, height);
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            unsigned char bytes[3];
-            if (std::fread(bytes, 1, 3, file) != 3) {
-                std::cerr << "Error: truncated PPM data in " << filename << '\n';
-                std::fclose(file);
-                return Image(0, 0);
-            }
-            image.at(x, y) = {bytes[0], bytes[1], bytes[2]};
+    Image image{width, height, std::vector<Pixel>(static_cast<std::size_t>(width) * height)};
+    for (Pixel& pixel : image.pixels) {
+        unsigned char bytes[3];
+        if (std::fread(bytes, 1, 3, file) != 3) {
+            std::cerr << "Error: truncated PPM data in " << filename << '\n';
+            std::fclose(file);
+            return {};
         }
+        pixel = {bytes[0], bytes[1], bytes[2]};
     }
 
     std::fclose(file);
@@ -326,7 +280,7 @@ Image load_ppm(const std::string& filename, bool& success) {
     return image;
 }
 
-void display_image(const Image& image, const AppOptions& options) {
+static void display_image(const Image& image, const Options& options) {
     std::string display_file = options.save_file;
     if (display_file.empty()) {
         display_file = "/tmp/mandelbrot_hpx.ppm";
@@ -349,4 +303,58 @@ void display_image(const Image& image, const AppOptions& options) {
     if (exit_code != 0) {
         std::cerr << "Could not open the image.\n";
     }
+}
+
+Options parse_options(int argc, char* argv[]) {
+    Options options;
+    std::string error;
+
+    if (!parse_arguments(argc, argv, options, error)) {
+        if (error.empty()) {
+            std::exit(0);
+        }
+    } else if (validate_arguments(options, error)) {
+        return options;
+    }
+
+    std::cerr << "Error: " << error << '\n';
+    print_usage(argv[0]);
+    std::exit(1);
+}
+
+int run(const Options& options, const char* name, Renderer render) {
+    Image image{};
+
+    if (!options.load_file.empty()) {
+        bool loaded = false;
+        image = load_ppm(options.load_file, loaded);
+        if (!loaded) {
+            return 1;
+        }
+    } else {
+        const View& view = options.view;
+        std::vector<int> counts(static_cast<std::size_t>(view.width) * view.height);
+
+        auto start = std::chrono::steady_clock::now();
+        render(options, counts);
+        auto end = std::chrono::steady_clock::now();
+
+        std::chrono::duration<double> elapsed = end - start;
+        std::cout << name << " generation time: " << elapsed.count() << " seconds\n";
+
+        image = {view.width, view.height, std::vector<Pixel>(counts.size())};
+        for (std::size_t i = 0; i < counts.size(); ++i) {
+            image.pixels[i] = color_pixel(options, counts[i]);
+        }
+    }
+
+    if (!options.save_file.empty() && !save_ppm(image, options.save_file)) {
+        return 1;
+    }
+
+    if (options.display) {
+        display_image(image, options);
+    }
+
+    return 0;
 }
