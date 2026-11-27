@@ -1,70 +1,44 @@
 #include "mandelbrot_common.hpp"
 #include "mandelbrot_kernel.h"
 
+#include <hpx/future.hpp>
+#include <hpx/hpx_init.hpp>
+#include <hpx/runtime.hpp>
+#include <hpx/thread.hpp>
+
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <iostream>
 #include <string>
-#include <thread>
 #include <vector>
 
-struct MandelbrotView;
-
-extern "C" void stream_init(int num_streams, int width, int max_chunk_height);
-extern "C" void stream_cleanup();
-extern "C" void launch_mandelbrot_stream(Pixel* host_pixels, const MandelbrotView& view,
-                                         int row_begin, int row_end, int stream_idx);
-extern "C" void stream_synchronize(int stream_idx);
-
 static void generate_mandelbrot(const AppOptions& options, Image& image) {
-    int total_pixels = options.width * options.height;
-    int grain = options.grain > 0 ? options.grain : options.width * options.height / 8;
-    if (grain < options.width) grain = options.width;
-    int num_tasks = (total_pixels + grain - 1) / grain;
-    if (num_tasks < 1) num_tasks = 1;
-
-    int num_threads = options.threads > 0 ? options.threads : std::thread::hardware_concurrency();
-    if (num_threads > num_tasks) num_threads = num_tasks;
-    if (num_threads < 1) num_threads = 1;
-
-    int max_chunk_height = (grain + options.width - 1) / options.width;
-    stream_init(num_threads, options.width, max_chunk_height);
+    int rows = strip_rows(options);
+    int num_strips = (options.height + rows - 1) / rows;
+    int num_streams = std::min(static_cast<int>(hpx::get_num_worker_threads()), num_strips);
+    stream_init(num_streams, image, rows);
 
     MandelbrotView view = make_view(options);
+    std::atomic<int> next_strip{0};
 
-    std::vector<std::thread> threads;
-    threads.reserve(num_threads);
-
-    std::atomic<int> next_task{0};
-
-    auto worker = [&](int stream_idx) {
-        while (true) {
-            int task_idx = next_task.fetch_add(1);
-            if (task_idx >= num_tasks) break;
-
-            int begin = task_idx * grain;
-            int end = std::min(begin + grain, total_pixels);
-            int row_begin = begin / options.width;
-            int row_end = (end + options.width - 1) / options.width;
-
-            launch_mandelbrot_stream(&image.pixels[row_begin * options.width], view,
-                                     row_begin, row_end, stream_idx);
-        }
-    };
-
-    for (int i = 0; i < num_threads; ++i) {
-        threads.emplace_back(worker, i);
+    std::vector<hpx::future<void>> tasks;
+    for (int stream = 0; stream < num_streams; ++stream) {
+        tasks.push_back(hpx::async([&, stream]() {
+            for (int strip = next_strip++; strip < num_strips; strip = next_strip++) {
+                int row_begin = strip * rows;
+                int row_end = std::min(row_begin + rows, view.height);
+                launch_mandelbrot_stream(&image.pixels[row_begin * view.width], view,
+                                         row_begin, row_end, stream);
+                while (!stream_done(stream)) {
+                    hpx::this_thread::yield();
+                }
+            }
+        }));
     }
 
-    for (auto& t : threads) {
-        t.join();
-    }
-
-    for (int i = 0; i < num_threads; ++i) {
-        stream_synchronize(i);
-    }
-
-    stream_cleanup();
+    hpx::wait_all(tasks);
+    stream_cleanup(image);
 }
 
 static int run(const AppOptions& options) {
@@ -77,14 +51,15 @@ static int run(const AppOptions& options) {
             return 1;
         }
     } else {
-        image = Image(options.width, options.height);
+        cuda_startup();
 
         auto start = std::chrono::steady_clock::now();
+        image = Image(options.width, options.height);
         generate_mandelbrot(options, image);
         auto end = std::chrono::steady_clock::now();
 
         std::chrono::duration<double> elapsed = end - start;
-        std::cout << "Optimized Hybrid (streams) generation time: " << elapsed.count() << " seconds\n";
+        std::cout << "HPX CUDA streams generation time: " << elapsed.count() << " seconds\n";
         std::cout << "Generated Mandelbrot set (" << options.width << "x"
                   << options.height << ", max_iter=" << options.max_iter
                   << ")\n";
@@ -120,5 +95,15 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    return run(options);
+    std::string threads_option = "--hpx:threads=" + std::to_string(options.threads);
+    char* hpx_argv[] = {argv[0], threads_option.data(), nullptr};
+    int hpx_argc = options.threads > 0 ? 2 : 1;
+
+    return hpx::init(
+        [&options](hpx::program_options::variables_map&) {
+            int status = run(options);
+            hpx::finalize();
+            return status;
+        },
+        hpx_argc, hpx_argv);
 }

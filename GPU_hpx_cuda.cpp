@@ -1,52 +1,28 @@
 #include "mandelbrot_common.hpp"
 #include "mandelbrot_kernel.h"
 
-#include <atomic>
+#include <hpx/future.hpp>
+#include <hpx/hpx_init.hpp>
+
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <string>
-#include <thread>
 #include <vector>
 
 static void generate_mandelbrot(const AppOptions& options, Image& image) {
-    int total_pixels = options.width * options.height;
-    int grain = options.grain > 0 ? options.grain : options.width * options.height / 8;
-    if (grain < options.width) grain = options.width;
-    int num_tasks = (total_pixels + grain - 1) / grain;
-    if (num_tasks < 1) num_tasks = 1;
-
-    int num_threads = options.threads > 0 ? options.threads : std::thread::hardware_concurrency();
-    if (num_threads > num_tasks) num_threads = num_tasks;
-    if (num_threads < 1) num_threads = 1;
-
+    int rows = strip_rows(options);
     MandelbrotView view = make_view(options);
 
-    std::vector<std::thread> threads;
-    threads.reserve(num_threads);
-
-    std::atomic<int> next_task{0};
-
-    auto worker = [&](int) {
-        while (true) {
-            int task_idx = next_task.fetch_add(1);
-            if (task_idx >= num_tasks) break;
-
-            int begin = task_idx * grain;
-            int end = std::min(begin + grain, total_pixels);
-            int row_begin = begin / options.width;
-            int row_end = (end + options.width - 1) / options.width;
-
-            launch_mandelbrot_kernel(&image.pixels[row_begin * options.width], view, row_begin, row_end);
-        }
-    };
-
-    for (int i = 0; i < num_threads; ++i) {
-        threads.emplace_back(worker, i);
+    std::vector<hpx::future<void>> tasks;
+    for (int row_begin = 0; row_begin < view.height; row_begin += rows) {
+        int row_end = std::min(row_begin + rows, view.height);
+        tasks.push_back(hpx::async([&image, view, row_begin, row_end]() {
+            launch_mandelbrot_kernel(&image.pixels[row_begin * view.width], view, row_begin, row_end);
+        }));
     }
 
-    for (auto& t : threads) {
-        t.join();
-    }
+    hpx::wait_all(tasks);
 }
 
 static int run(const AppOptions& options) {
@@ -59,14 +35,15 @@ static int run(const AppOptions& options) {
             return 1;
         }
     } else {
-        image = Image(options.width, options.height);
+        cuda_startup();
 
         auto start = std::chrono::steady_clock::now();
+        image = Image(options.width, options.height);
         generate_mandelbrot(options, image);
         auto end = std::chrono::steady_clock::now();
 
         std::chrono::duration<double> elapsed = end - start;
-        std::cout << "Hybrid (std::thread+CUDA) generation time: " << elapsed.count() << " seconds\n";
+        std::cout << "HPX CUDA generation time: " << elapsed.count() << " seconds\n";
         std::cout << "Generated Mandelbrot set (" << options.width << "x"
                   << options.height << ", max_iter=" << options.max_iter
                   << ")\n";
@@ -102,5 +79,15 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    return run(options);
+    std::string threads_option = "--hpx:threads=" + std::to_string(options.threads);
+    char* hpx_argv[] = {argv[0], threads_option.data(), nullptr};
+    int hpx_argc = options.threads > 0 ? 2 : 1;
+
+    return hpx::init(
+        [&options](hpx::program_options::variables_map&) {
+            int status = run(options);
+            hpx::finalize();
+            return status;
+        },
+        hpx_argc, hpx_argv);
 }

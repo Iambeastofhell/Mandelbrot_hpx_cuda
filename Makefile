@@ -3,12 +3,11 @@ HPX_PREFIX ?= /usr
 HPX_LIBDIR ?= $(HPX_PREFIX)/lib64
 HPX_FLAGS := -I$(HPX_PREFIX)/include -L$(HPX_LIBDIR) -Xlinker -rpath -Xlinker $(HPX_LIBDIR)
 HPX_LIBS := -lhpx_init -lhpx -lhpx_core -lhwloc -ltcmalloc_minimal -ldl -lrt
-HPX_LIBS_NVCC := -lhpx_init -lhpx -lhpx_core -lhwloc -ltcmalloc_minimal -Xcompiler -pthread -ldl -lrt
+HPX_LIBS_NVCC := -lhpx_init -lhpx -lhpx_core -lhwloc -ltcmalloc_minimal -Xcompiler -pthread -Xlinker -ldl -Xlinker -lrt
 CXXFLAGS := -std=c++17 -O3 -Wall -Wextra -pedantic
 NVCC := nvcc
 CUDA_ARCH ?= native
-CUDA_INC := /usr/local/cuda/include
-CUDA_LIB := /usr/local/cuda/lib64
+NVCCFLAGS := -std=c++17 -O3 --fmad=false -arch=$(CUDA_ARCH)
 
 BUILD_DIR := build
 OUTPUT_DIR := output
@@ -24,13 +23,11 @@ SEQUENTIAL_TARGET := $(BUILD_DIR)/mandelbrot_sequential
 HPX_TARGET := $(BUILD_DIR)/mandelbrot_hpx
 CUDA_TARGET := $(BUILD_DIR)/mandelbrot_cuda
 HPX_CUDA_TARGET := $(BUILD_DIR)/mandelbrot_hpx_cuda
-HPX_CUDA_KERNEL_OBJ := $(BUILD_DIR)/GPU_hpx_cuda_kernel.o
 HPX_CUDA_OPT_TARGET := $(BUILD_DIR)/mandelbrot_hpx_cuda_opt
-HPX_CUDA_STREAM_KERNEL_OBJ := $(BUILD_DIR)/GPU_hpx_cuda_stream.o
 
 .PHONY: all sequential hpx cuda hpx-cuda hpx-cuda-opt clean check run-hpx run-seq run-cuda run-hpx-cuda run-hpx-cuda-opt benchmark
 
-all: sequential hpx hpx-cuda hpx-cuda-opt
+all: sequential hpx
 
 $(BUILD_DIR) $(OUTPUT_DIR):
 	mkdir -p $@
@@ -41,20 +38,14 @@ sequential: $(BUILD_DIR)
 hpx: $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(HPX_FLAGS) $(HPX_SOURCE) $(COMMON_SOURCE) -o $(HPX_TARGET) $(HPX_LIBS)
 
-hpx-cuda: $(BUILD_DIR) $(HPX_CUDA_KERNEL_OBJ)
-	$(CXX) $(CXXFLAGS) -I$(CUDA_INC) -L$(CUDA_LIB) $(HPX_CUDA_SOURCE) $(COMMON_SOURCE) $(HPX_CUDA_KERNEL_OBJ) -o $(HPX_CUDA_TARGET) -lcudart -lpthread
+hpx-cuda: $(BUILD_DIR)
+	$(NVCC) $(NVCCFLAGS) $(HPX_FLAGS) $(HPX_CUDA_SOURCE) $(HPX_CUDA_KERNEL) $(COMMON_SOURCE) -o $(HPX_CUDA_TARGET) $(HPX_LIBS_NVCC)
 
-$(HPX_CUDA_KERNEL_OBJ): $(HPX_CUDA_KERNEL) $(BUILD_DIR)
-	$(NVCC) -std=c++17 -O3 --fmad=false -arch=$(CUDA_ARCH) -c $< -o $@
-
-hpx-cuda-opt: $(BUILD_DIR) $(HPX_CUDA_STREAM_KERNEL_OBJ)
-	$(CXX) $(CXXFLAGS) -I$(CUDA_INC) -L$(CUDA_LIB) $(HPX_CUDA_OPT_SOURCE) $(COMMON_SOURCE) $(HPX_CUDA_STREAM_KERNEL_OBJ) -o $(HPX_CUDA_OPT_TARGET) -lcudart -lpthread
-
-$(HPX_CUDA_STREAM_KERNEL_OBJ): $(HPX_CUDA_STREAM_KERNEL) $(BUILD_DIR)
-	$(NVCC) -std=c++17 -O3 --fmad=false -arch=$(CUDA_ARCH) -c $< -o $@
+hpx-cuda-opt: $(BUILD_DIR)
+	$(NVCC) $(NVCCFLAGS) $(HPX_FLAGS) $(HPX_CUDA_OPT_SOURCE) $(HPX_CUDA_STREAM_KERNEL) $(COMMON_SOURCE) -o $(HPX_CUDA_OPT_TARGET) $(HPX_LIBS_NVCC)
 
 cuda: $(BUILD_DIR)
-	$(NVCC) -std=c++17 -O3 --fmad=false -arch=$(CUDA_ARCH) $(CUDA_SOURCE) $(COMMON_SOURCE) -o $(CUDA_TARGET)
+	$(NVCC) $(NVCCFLAGS) $(CUDA_SOURCE) $(COMMON_SOURCE) -o $(CUDA_TARGET)
 
 check: sequential
 	./$(SEQUENTIAL_TARGET) --width 128 --height 128 --maxiter 100 --save /tmp/mandelbrot_check.ppm
