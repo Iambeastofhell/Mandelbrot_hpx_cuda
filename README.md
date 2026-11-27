@@ -26,8 +26,8 @@ Implementation of HPX applications for Mandelbrot set generation, compared with 
 | 1 | Sequential CPU renderer, the reference for correctness and time | `mandelbrot_sequential` | |
 | 2 | HPX renderer with one task per pixel, row or fixed-size tile, and parallel loops with different chunk sizes | `mandelbrot_hpx` | 1 |
 | 3 | HPX renderer that checks tile borders to skip work, with a tree of futures | `mandelbrot_hpx --method border` | Best of 2 |
-| 4a | Live explorer that draws tiles as they finish, cancels old work and recomputes everything | `mandelbrot_explorer` | 3 |
-| 4b | Live explorer that reuses earlier work | Not yet | 4a |
+| 4a | Live explorer that draws tiles as they finish, cancels old work and recomputes everything | `mandelbrot_explorer --no-reuse` | 3 |
+| 4b | Live explorer that reuses earlier work | `mandelbrot_explorer` | 4a |
 | 5 | CUDA renderer that computes every pixel on the GPU | `mandelbrot_cuda` | 3 |
 | 6 | Version 3 with small non-uniform tiles computed by GPU kernels | Not yet | 3 and 5 |
 
@@ -74,9 +74,10 @@ The CUDA build needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. It targ
 | `--min-tile N` | Smallest tile the border method splits, at least 3 | 16 |
 | `--chunk N` | Pixels per loop chunk, 0 lets HPX choose | 0 |
 | `--pans N` | Explorer: pan N times without a window, then exit | 0 |
+| `--no-reuse` | Explorer: compute every tile again for each view | |
 | `--help` | Print usage information | |
 
-`--threads`, `--method`, `--tile`, `--min-tile`, `--chunk` and `--pans` only affect the HPX programs that use them. Other programs accept and ignore them.
+`--threads`, `--method`, `--tile`, `--min-tile`, `--chunk`, `--pans` and `--no-reuse` only affect the programs that use them. Other programs accept and ignore them.
 
 Each program prints its generation time, which covers computing the escape counts. Coloring and saving are not included. The CUDA time includes allocating device memory and copying the results back, but not starting the CUDA runtime.
 
@@ -121,7 +122,19 @@ The method is not exact, since detail thinner than a pixel can pass between bord
 | `r` | Return to the starting view |
 | `q`, Escape | Quit |
 
-Each tile of `--tile` pixels is computed with the border method and drawn as soon as it finishes, which its tasks report through an HPX channel. A new view cancels the tasks of the old one with stop tokens and computes every tile again. Until a tile is ready, the old picture, moved or scaled to the new view, stands in for it.
+Each tile of `--tile` pixels is computed with the border method and drawn as soon as it finishes, which its tasks report through an HPX channel. Until a tile is ready, the old picture, moved or scaled to the new view, stands in for it.
+
+The explorer keeps a cache of tiles, each with the future of its computation, so that no tile is started twice:
+
+- Finished tiles stay in the cache after they leave the view.
+- A tile that leaves the view before it finishes is cancelled with its stop token and removed. Tiles still in view keep running.
+- A change of zoom or iteration limit cancels and removes every tile.
+- The cache holds at most four screens of tiles and drops those out of view the longest.
+- Only the main thread uses the cache, so it needs no lock.
+
+With `--no-reuse`, every new view cancels the old tasks and computes every tile again.
+
+Zooming in stops near the limit of `double`, and zooming out at a view width of 8.
 
 The title of the window shows the view as options for the other programs, and the time the view took.
 

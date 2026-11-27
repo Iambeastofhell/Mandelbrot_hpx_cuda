@@ -28,6 +28,7 @@ struct Options {
     int min_tile = 16;
     int chunk = 0;
     int pans = 0;
+    bool reuse = true;
     std::string save_file;
     std::string counts_file;
     View view{};  // built from the values above

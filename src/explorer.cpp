@@ -1,4 +1,4 @@
-// The main thread owns the window and the list of tiles. HPX tasks compute the tiles
+// The main thread owns the window and the cache of tiles. HPX tasks compute the tiles
 // and report each finished one through a channel.
 
 #include "app.hpp"
@@ -14,12 +14,14 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <thread>
 #include <utility>
 
 constexpr Pixel BACKGROUND{40, 40, 40};
 constexpr int MAX_DOUBLED_ITER = 1 << 20;
+constexpr std::size_t CACHE_SCREENS = 4;
 
 using Key = std::pair<long long, long long>;  // column and row of a tile on the grid
 
@@ -47,17 +49,39 @@ public:
           pixels(static_cast<std::size_t>(options.width) * options.height, BACKGROUND), next(finished.get()) {}
 
     ~Explorer() {
-        cancel();
+        cancel([](const Key&, const Tile&) { return true; });
     }
 
-    // Cancels the old work and starts on every tile of the new view.
+    // Draws the tiles of the new view that are cached and starts on the others.
     void show(const View& new_view) {
-        cancel();
+        // Cached counts are only valid at the same spacing and iteration limit.
+        bool reusable = options.reuse && new_view.spacing == view.spacing && new_view.max_iter == view.max_iter;
         move_picture(new_view);
         view = new_view;
+
+        visible.clear();
         for_each_tile(view.area, options.tile, [this](const Rect& part) {
-            launch({floor_div(part.left, options.tile), floor_div(part.top, options.tile)});
+            visible.insert({floor_div(part.left, options.tile), floor_div(part.top, options.tile)});
         });
+
+        // Cancels what cannot be used: unfinished tiles that left the view, or all of them.
+        cancel([&](const Key& key, const Tile& tile) {
+            return !reusable || (!tile.done.is_ready() && !visible.count(key));
+        });
+
+        ++frame;
+        for (const Key& key : visible) {
+            auto entry = tiles.find(key);
+            if (entry == tiles.end()) {
+                launch(key);
+                continue;
+            }
+            entry->second.shown = frame;
+            if (entry->second.done.is_ready()) {
+                draw(key, entry->second);
+            }
+        }
+        limit_cache();
     }
 
     void set_color(Color new_color) {
@@ -85,7 +109,7 @@ public:
     }
 
     bool complete() const {
-        return std::all_of(tiles.begin(), tiles.end(), [](const auto& entry) { return entry.second.drawn; });
+        return std::all_of(visible.begin(), visible.end(), [this](const Key& key) { return tiles.at(key).drawn; });
     }
 
     // Escape counts of the view. Only valid once it is complete.
@@ -114,6 +138,7 @@ private:
         hpx::stop_source stop;
         hpx::shared_future<void> done;
         bool drawn = false;
+        int shown = 0;  // the last frame that had this tile in view
     };
 
     Rect tile_area(const Key& key) const {
@@ -123,6 +148,7 @@ private:
     void launch(const Key& key) {
         Rect area = tile_area(key);
         Tile& tile = tiles[key];
+        tile.shown = frame;
         tile.counts = std::make_shared<std::vector<int>>(static_cast<std::size_t>(area.width) * area.height);
 
         hpx::future<void> work = hpx::async(render_tile, view, Canvas{tile.counts->data(), area}, area,
@@ -133,11 +159,26 @@ private:
         ++computed;
     }
 
-    void cancel() {
-        for (auto& [key, tile] : tiles) {
-            tile.stop.request_stop();
+    // Stops the tiles that match and removes them from the cache.
+    template <typename Predicate>
+    void cancel(Predicate matches) {
+        for (auto entry = tiles.begin(); entry != tiles.end();) {
+            if (matches(entry->first, entry->second)) {
+                entry->second.stop.request_stop();
+                entry = tiles.erase(entry);
+            } else {
+                ++entry;
+            }
         }
-        tiles.clear();
+    }
+
+    // Drops the finished tiles that have been out of view the longest.
+    void limit_cache() {
+        while (tiles.size() > CACHE_SCREENS * visible.size()) {
+            tiles.erase(std::min_element(tiles.begin(), tiles.end(), [](const auto& a, const auto& b) {
+                return a.second.shown < b.second.shown;
+            }));
+        }
     }
 
     void draw(const Key& key, Tile& tile) {
@@ -153,12 +194,15 @@ private:
     void move_picture(const View& to) {
         std::vector<Pixel> old = pixels;
         double scale = to.spacing / view.spacing;
+        std::vector<long long> columns(to.area.width);
+        for (int x = 0; x < to.area.width; ++x) {
+            columns[x] = std::llround((to.area.left + x) * scale) - view.area.left;
+        }
         for (int y = 0; y < to.area.height; ++y) {
             long long row = std::llround((to.area.top + y) * scale) - view.area.top;
             for (int x = 0; x < to.area.width; ++x) {
-                long long column = std::llround((to.area.left + x) * scale) - view.area.left;
-                bool inside = column >= 0 && column < view.area.width && row >= 0 && row < view.area.height;
-                pixels[y * to.area.width + x] = inside ? old[row * view.area.width + column] : BACKGROUND;
+                bool inside = columns[x] >= 0 && columns[x] < view.area.width && row >= 0 && row < view.area.height;
+                pixels[y * to.area.width + x] = inside ? old[row * view.area.width + columns[x]] : BACKGROUND;
             }
         }
     }
@@ -167,9 +211,11 @@ private:
     View view;
     Color color;
     std::vector<Pixel> pixels;
-    std::map<Key, Tile> tiles;
+    std::map<Key, Tile> tiles;  // the cache, with tiles that may still be running
+    std::set<Key> visible;
     hpx::lcos::local::channel<Key> finished;
     hpx::future<Key> next;
+    int frame = 0;
     int computed = 0;
 };
 
@@ -361,7 +407,9 @@ int main(int argc, char* argv[]) {
     // Signals are left alone so that SDL turns Ctrl+C into a normal quit.
     hpx::init_params params;
     params.cfg = {"hpx.handle_signals=0"};
-    hpx::start(nullptr, hpx_argc, hpx_argv, params);
+    if (!hpx::start(nullptr, hpx_argc, hpx_argv, params)) {
+        return 1;
+    }
     int status = options.pans > 0 ? replay(options) : explore(options);
     hpx::post([]() { hpx::finalize(); });
     hpx::stop();
