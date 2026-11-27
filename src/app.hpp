@@ -25,6 +25,7 @@ struct Options {
     int threads = 0;
     std::string method = "row";
     int tile = 64;
+    int min_tile = 16;
     int chunk = 0;
     std::string save_file;
     std::string counts_file;

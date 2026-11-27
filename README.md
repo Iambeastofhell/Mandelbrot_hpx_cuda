@@ -14,7 +14,7 @@ This repository contains a Mandelbrot set image generator for the course CS5658 
 Implementation of HPX applications for Mandelbrot set generation, compared with other versions such as sequential and pure CUDA.
 
 - `mandelbrot_sequential` uses a normal nested CPU loop.
-- `mandelbrot_hpx` splits the image into HPX tasks, by one of the methods below.
+- `mandelbrot_hpx` splits the image into HPX tasks by one of the methods below.
 - `mandelbrot_cuda` runs one CUDA thread per pixel.
 - All programs use the same pixel mapping, colors, file formats, and command line options.
 
@@ -24,7 +24,7 @@ Implementation of HPX applications for Mandelbrot set generation, compared with 
 |---|---|---|---|
 | 1 | Sequential CPU renderer, the reference for correctness and time | `mandelbrot_sequential` | |
 | 2 | HPX renderer with one task per pixel, row or fixed-size tile, and parallel loops with different chunk sizes | `mandelbrot_hpx` | 1 |
-| 3 | HPX renderer that checks tile borders to skip work, with a tree of futures | Not yet | Best of 2 |
+| 3 | HPX renderer that checks tile borders to skip work, with a tree of futures | `mandelbrot_hpx --method border` | Best of 2 |
 | 4a | Live explorer that draws tiles as they finish, cancels old work and recomputes everything | Not yet | 3 |
 | 4b | Live explorer that reuses earlier work | Not yet | 4a |
 | 5 | CUDA renderer that computes every pixel on the GPU | `mandelbrot_cuda` | 3 |
@@ -65,12 +65,13 @@ The CUDA build needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. It targ
 | `--save FILE` | Save the image as PPM | None |
 | `--counts FILE` | Save the escape counts as raw 32-bit integers | None |
 | `--threads N` | HPX worker threads, at most the number of CPUs | One per core |
-| `--method NAME` | HPX method: `pixel`, `row`, `tile` or `loop` | `row` |
+| `--method NAME` | HPX method: `pixel`, `row`, `tile`, `loop` or `border` | `row` |
 | `--tile N` | Side of a tile in pixels | 64 |
+| `--min-tile N` | Smallest tile the border method splits, at least 3 | 16 |
 | `--chunk N` | Pixels per loop chunk, 0 lets HPX choose | 0 |
 | `--help` | Print usage information | |
 
-`--threads`, `--method`, `--tile` and `--chunk` only affect HPX. Other programs accept and ignore them.
+`--threads`, `--method`, `--tile`, `--min-tile` and `--chunk` only affect HPX. Other programs accept and ignore them.
 
 Each program prints its generation time, which covers computing the escape counts. Coloring and saving are not included. The CUDA time includes allocating device memory and copying the results back, but not starting the CUDA runtime.
 
@@ -82,8 +83,23 @@ Each program prints its generation time, which covers computing the escape count
 | `row` | One row |
 | `tile` | One square tile of the pixel grid |
 | `loop` | A chunk of a parallel loop over all pixels |
+| `border` | One tile, which creates more tasks where needed |
 
 `pixel` creates one task for every pixel, which takes about 500 MB of memory at 1920x1080.
+
+## Border method
+
+`--method border` uses the Mariani-Silver method on tiles of `--tile` pixels. For each tile:
+
+1. A tile narrower or shorter than `--min-tile` has every pixel computed.
+2. Otherwise its one pixel border is computed.
+3. If every border pixel reaches the iteration limit, the inside is filled with the limit.
+4. If every border pixel has the same count below the limit, and the tile does not contain the point 0, the inside is filled with that count.
+5. Otherwise the inside is split into four tiles, each a new task. The future of the tile is ready when the futures of the four are (`hpx::when_all`).
+
+Every pixel belongs to one tile, so tasks never write the same pixel.
+
+The method is not exact, since detail thinner than a pixel can pass between border pixels. Comparing with the counts of the sequential program gives the number of mismatched pixels.
 
 ## Pixel grid
 
@@ -93,7 +109,7 @@ The view width can be at most 16, and the spacing at least 1e-15, near the limit
 
 ## Comparing results
 
-The CPU and GPU programs share the pixel code in `src/mandelbrot.hpp`, and the Makefile stops both compilers from fusing multiplications and additions. The counts should be identical:
+The CPU and GPU programs share the pixel code in `src/mandelbrot.hpp`, and the Makefile stops both compilers from fusing multiplications and additions. Apart from the border method, the counts should be identical:
 
 ```bash
 ./build/mandelbrot_sequential --counts sequential.bin
@@ -107,7 +123,7 @@ cmp sequential.bin hpx.bin
 |---|---|
 | `src/mandelbrot.hpp` | Pixel grid and escape count, used on the CPU and the GPU |
 | `src/app.hpp`, `src/app.cpp` | Command line options, colors, timing and output files |
-| `src/tiles.hpp` | Tiles of the pixel grid |
+| `src/tiles.hpp` | Tiles of the pixel grid and the border method |
 | `src/sequential.cpp` | Sequential renderer |
 | `src/hpx.cpp` | HPX renderer |
 | `src/cuda.cu` | CUDA renderer |

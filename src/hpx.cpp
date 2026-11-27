@@ -44,11 +44,23 @@ static void render_loop(const Options& options, const Canvas& canvas) {
     }
 }
 
+// One task for each tile, which splits itself into more tasks where needed.
+static void render_border(const Options& options, const Canvas& canvas) {
+    std::vector<hpx::future<void>> tiles;
+    for_each_tile(options.view.area, options.tile, [&](const Rect& tile) {
+        tiles.push_back(hpx::async(render_tile, options.view, canvas, tile, options.min_tile, hpx::stop_token{}));
+    });
+
+    hpx::wait_all(tiles);
+}
+
 static void render(const Options& options, std::vector<int>& counts) {
     Canvas canvas{counts.data(), options.view.area};
 
     if (options.method == "loop") {
         render_loop(options, canvas);
+    } else if (options.method == "border") {
+        render_border(options, canvas);
     } else {
         render_tasks(options, canvas);
     }

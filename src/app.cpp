@@ -17,8 +17,9 @@ static void print_usage(const char* program) {
               << "  --save FILE       Save the image as PPM\n"
               << "  --counts FILE     Save the escape counts as raw 32-bit integers\n"
               << "  --threads N       HPX worker threads (default: one per core)\n"
-              << "  --method NAME     HPX: pixel, row, tile or loop (default: row)\n"
+              << "  --method NAME     HPX: pixel, row, tile, loop or border (default: row)\n"
               << "  --tile N          HPX: side of a tile in pixels (default: 64)\n"
+              << "  --min-tile N      HPX border: smallest tile that is split (default: 16)\n"
               << "  --chunk N         HPX loop: pixels per chunk, 0 lets HPX choose (default: 0)\n"
               << "  --help            Show this help\n";
 }
@@ -97,6 +98,8 @@ Options parse_options(int argc, char* argv[]) {
             options.method = value();
         } else if (name == "--tile") {
             options.tile = integer();
+        } else if (name == "--min-tile") {
+            options.min_tile = integer();
         } else if (name == "--chunk") {
             options.chunk = integer();
         } else {
@@ -125,8 +128,11 @@ Options parse_options(int argc, char* argv[]) {
     if (options.tile <= 0) {
         fail(argv[0], "tile must be greater than zero");
     }
+    if (options.min_tile < 3) {
+        fail(argv[0], "min-tile must be at least 3");
+    }
     const std::string& method = options.method;
-    if (method != "pixel" && method != "row" && method != "tile" && method != "loop") {
+    if (method != "pixel" && method != "row" && method != "tile" && method != "loop" && method != "border") {
         fail(argv[0], "Unknown method: " + method);
     }
 
