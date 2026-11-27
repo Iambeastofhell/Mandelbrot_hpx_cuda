@@ -84,7 +84,7 @@ class Benchmark:
         return values
 
     def reference(self, view):
-        """The counts of the sequential program, against which the others are checked."""
+        """The counts from the sequential program, used to check the others."""
         if view not in self.references:
             self.execute("sequential", [*VIEWS[view], "--counts", self.output])
             self.references[view] = self.counts()
@@ -129,7 +129,7 @@ def found(pattern, text):
 
 
 def table(rows):
-    """One line per case with the median over its runs, leaving out columns that are empty."""
+    """A table with the median time of each case. Empty columns are left out."""
     cases = {}
     for row in rows:
         cases.setdefault((row["view"], row["program"], row["options"]), []).append(row)
