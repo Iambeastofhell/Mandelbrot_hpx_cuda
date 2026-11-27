@@ -1,0 +1,291 @@
+suite,view,program,options,run,seconds,tasks,idle,tiles,mismatched
+tune,full,sequential,,0,1.34924,,,,0
+tune,full,sequential,,1,1.34292,,,,0
+tune,full,sequential,,2,1.34047,,,,0
+tune,full,sequential,,3,1.3402,,,,0
+tune,full,sequential,,4,1.3408,,,,0
+tune,full,hpx,--method pixel,0,0.948941,2.07366,,,0
+tune,full,hpx,--method pixel,1,0.987415,2.07366,,,0
+tune,full,hpx,--method pixel,2,0.964766,2.07366,,,0
+tune,full,hpx,--method pixel,3,0.945426,2.07366,,,0
+tune,full,hpx,--method pixel,4,0.950747,2.07366,,,0
+tune,full,hpx,--method row,0,0.0967717,1137,,,0
+tune,full,hpx,--method row,1,0.0984971,1138,,,0
+tune,full,hpx,--method row,2,0.0972737,1138,,,0
+tune,full,hpx,--method row,3,0.0970419,1137,,,0
+tune,full,hpx,--method row,4,0.0989352,1138,,,0
+tune,full,hpx,--method tile --tile 16,0,0.104699,8217,,,0
+tune,full,hpx,--method tile --tile 16,1,0.104998,8217,,,0
+tune,full,hpx,--method tile --tile 16,2,0.105053,8217,,,0
+tune,full,hpx,--method tile --tile 16,3,0.10871,8217,,,0
+tune,full,hpx,--method tile --tile 16,4,0.106185,8217,,,0
+tune,full,hpx,--method tile --tile 32,0,0.100261,2097,,,0
+tune,full,hpx,--method tile --tile 32,1,0.100483,2097,,,0
+tune,full,hpx,--method tile --tile 32,2,0.100113,2097,,,0
+tune,full,hpx,--method tile --tile 32,3,0.100959,2097,,,0
+tune,full,hpx,--method tile --tile 32,4,0.0999854,2097,,,0
+tune,full,hpx,--method tile --tile 64,0,0.100704,597,,,0
+tune,full,hpx,--method tile --tile 64,1,0.100459,597,,,0
+tune,full,hpx,--method tile --tile 64,2,0.100435,597,,,0
+tune,full,hpx,--method tile --tile 64,3,0.0998276,598,,,0
+tune,full,hpx,--method tile --tile 64,4,0.10031,597,,,0
+tune,full,hpx,--method tile --tile 128,0,0.1195,207,,,0
+tune,full,hpx,--method tile --tile 128,1,0.119159,207,,,0
+tune,full,hpx,--method tile --tile 128,2,0.120605,207,,,0
+tune,full,hpx,--method tile --tile 128,3,0.121119,207,,,0
+tune,full,hpx,--method tile --tile 128,4,0.120728,207,,,0
+tune,full,hpx,--method tile --tile 256,0,0.17231,105,,,0
+tune,full,hpx,--method tile --tile 256,1,0.162964,105,,,0
+tune,full,hpx,--method tile --tile 256,2,0.163563,105,,,0
+tune,full,hpx,--method tile --tile 256,3,0.171593,105,,,0
+tune,full,hpx,--method tile --tile 256,4,0.166477,105,,,0
+tune,full,hpx,--method loop --chunk 0,0,0.116037,73,,,0
+tune,full,hpx,--method loop --chunk 0,1,0.115942,73,,,0
+tune,full,hpx,--method loop --chunk 0,2,0.116681,73,,,0
+tune,full,hpx,--method loop --chunk 0,3,0.117962,73,,,0
+tune,full,hpx,--method loop --chunk 0,4,0.116829,73,,,0
+tune,full,hpx,--method loop --chunk 64,0,0.102484,73,,,0
+tune,full,hpx,--method loop --chunk 64,1,0.101662,73,,,0
+tune,full,hpx,--method loop --chunk 64,2,0.101678,73,,,0
+tune,full,hpx,--method loop --chunk 64,3,0.101898,73,,,0
+tune,full,hpx,--method loop --chunk 64,4,0.10273,73,,,0
+tune,full,hpx,--method loop --chunk 512,0,0.102196,73,,,0
+tune,full,hpx,--method loop --chunk 512,1,0.103536,73,,,0
+tune,full,hpx,--method loop --chunk 512,2,0.101894,73,,,0
+tune,full,hpx,--method loop --chunk 512,3,0.10206,73,,,0
+tune,full,hpx,--method loop --chunk 512,4,0.102572,73,,,0
+tune,full,hpx,--method loop --chunk 4096,0,0.103704,73,,,0
+tune,full,hpx,--method loop --chunk 4096,1,0.104287,73,,,0
+tune,full,hpx,--method loop --chunk 4096,2,0.102709,73,,,0
+tune,full,hpx,--method loop --chunk 4096,3,0.102405,73,,,0
+tune,full,hpx,--method loop --chunk 4096,4,0.101575,73,,,0
+tune,full,hpx,--method loop --chunk 32768,0,0.116798,73,,,0
+tune,full,hpx,--method loop --chunk 32768,1,0.117569,73,,,0
+tune,full,hpx,--method loop --chunk 32768,2,0.116386,73,,,0
+tune,full,hpx,--method loop --chunk 32768,3,0.120532,73,,,0
+tune,full,hpx,--method loop --chunk 32768,4,0.116799,73,,,0
+tune,full,hpx,--method border --tile 32 --min-tile 8,0,0.0378479,19912,,,1
+tune,full,hpx,--method border --tile 32 --min-tile 8,1,0.0377271,19927,,,1
+tune,full,hpx,--method border --tile 32 --min-tile 8,2,0.037731,19912,,,1
+tune,full,hpx,--method border --tile 32 --min-tile 8,3,0.0376599,19912,,,1
+tune,full,hpx,--method border --tile 32 --min-tile 8,4,0.0396088,19912,,,1
+tune,full,hpx,--method border --tile 32 --min-tile 16,0,0.0353304,6792,,,0
+tune,full,hpx,--method border --tile 32 --min-tile 16,1,0.0358808,6792,,,0
+tune,full,hpx,--method border --tile 32 --min-tile 16,2,0.0375195,6793,,,0
+tune,full,hpx,--method border --tile 32 --min-tile 16,3,0.0393756,6793,,,0
+tune,full,hpx,--method border --tile 32 --min-tile 16,4,0.036525,6792,,,0
+tune,full,hpx,--method border --tile 32 --min-tile 32,0,0.0365063,6547,,,0
+tune,full,hpx,--method border --tile 32 --min-tile 32,1,0.0372032,6547,,,0
+tune,full,hpx,--method border --tile 32 --min-tile 32,2,0.0372609,6547,,,0
+tune,full,hpx,--method border --tile 32 --min-tile 32,3,0.0361261,6547,,,0
+tune,full,hpx,--method border --tile 32 --min-tile 32,4,0.0361593,6547,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 8,0,0.035048,19412,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 8,1,0.0359975,19412,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 8,2,0.0360875,19412,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 8,3,0.0356725,19412,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 8,4,0.0359442,19412,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 16,0,0.0339194,6647,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 16,1,0.0337478,6647,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 16,2,0.0360142,6648,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 16,3,0.0339558,6647,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 16,4,0.034432,6647,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 32,0,0.0399562,2067,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 32,1,0.0364788,2067,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 32,2,0.0376786,2067,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 32,3,0.0380839,2082,,,0
+tune,full,hpx,--method border --tile 64 --min-tile 32,4,0.036879,2068,,,0
+tune,full,hpx,--method border --tile 128 --min-tile 8,0,0.0346675,19217,,,1
+tune,full,hpx,--method border --tile 128 --min-tile 8,1,0.0348971,19217,,,1
+tune,full,hpx,--method border --tile 128 --min-tile 8,2,0.0349941,19217,,,1
+tune,full,hpx,--method border --tile 128 --min-tile 8,3,0.0363828,19217,,,1
+tune,full,hpx,--method border --tile 128 --min-tile 8,4,0.034624,19217,,,1
+tune,full,hpx,--method border --tile 128 --min-tile 16,0,0.0321904,6647,,,0
+tune,full,hpx,--method border --tile 128 --min-tile 16,1,0.031932,6632,,,0
+tune,full,hpx,--method border --tile 128 --min-tile 16,2,0.0318986,6632,,,0
+tune,full,hpx,--method border --tile 128 --min-tile 16,3,0.0325526,6647,,,0
+tune,full,hpx,--method border --tile 128 --min-tile 16,4,0.0320667,6632,,,0
+tune,full,hpx,--method border --tile 128 --min-tile 32,0,0.0368415,2147,,,0
+tune,full,hpx,--method border --tile 128 --min-tile 32,1,0.0370669,2162,,,0
+tune,full,hpx,--method border --tile 128 --min-tile 32,2,0.0412561,2147,,,0
+tune,full,hpx,--method border --tile 128 --min-tile 32,3,0.0395615,2147,,,0
+tune,full,hpx,--method border --tile 128 --min-tile 32,4,0.0376509,2147,,,0
+tune,full,hpx,--method border --tile 256 --min-tile 8,0,0.0363665,18775,,,1
+tune,full,hpx,--method border --tile 256 --min-tile 8,1,0.0410202,18775,,,1
+tune,full,hpx,--method border --tile 256 --min-tile 8,2,0.0357154,18775,,,1
+tune,full,hpx,--method border --tile 256 --min-tile 8,3,0.0394705,18775,,,1
+tune,full,hpx,--method border --tile 256 --min-tile 8,4,0.0360568,18775,,,1
+tune,full,hpx,--method border --tile 256 --min-tile 16,0,0.0328812,6490,,,0
+tune,full,hpx,--method border --tile 256 --min-tile 16,1,0.0333454,6490,,,0
+tune,full,hpx,--method border --tile 256 --min-tile 16,2,0.0339868,6490,,,0
+tune,full,hpx,--method border --tile 256 --min-tile 16,3,0.0368982,6505,,,0
+tune,full,hpx,--method border --tile 256 --min-tile 16,4,0.0324894,6490,,,0
+tune,full,hpx,--method border --tile 256 --min-tile 32,0,0.037011,2125,,,0
+tune,full,hpx,--method border --tile 256 --min-tile 32,1,0.0358814,2125,,,0
+tune,full,hpx,--method border --tile 256 --min-tile 32,2,0.0388255,2126,,,0
+tune,full,hpx,--method border --tile 256 --min-tile 32,3,0.0358252,2140,,,0
+tune,full,hpx,--method border --tile 256 --min-tile 32,4,0.0364308,2125,,,0
+views,full,sequential,,0,1.36161,,,,0
+views,full,sequential,,1,1.34843,,,,0
+views,full,sequential,,2,1.35046,,,,0
+views,full,sequential,,3,1.35276,,,,0
+views,full,sequential,,4,1.36352,,,,0
+views,full,hpx,--method row,0,0.0985354,1137,,,0
+views,full,hpx,--method row,1,0.0978063,1138,,,0
+views,full,hpx,--method row,2,0.0978302,1153,,,0
+views,full,hpx,--method row,3,0.0980429,1137,,,0
+views,full,hpx,--method row,4,0.0986153,1138,,,0
+views,full,hpx,--method tile --tile 64,0,0.101965,597,,,0
+views,full,hpx,--method tile --tile 64,1,0.109125,597,,,0
+views,full,hpx,--method tile --tile 64,2,0.101546,598,,,0
+views,full,hpx,--method tile --tile 64,3,0.100828,597,,,0
+views,full,hpx,--method tile --tile 64,4,0.100067,612,,,0
+views,full,hpx,--method loop --chunk 0,0,0.115745,73,,,0
+views,full,hpx,--method loop --chunk 0,1,0.116233,73,,,0
+views,full,hpx,--method loop --chunk 0,2,0.116706,73,,,0
+views,full,hpx,--method loop --chunk 0,3,0.116112,73,,,0
+views,full,hpx,--method loop --chunk 0,4,0.116129,73,,,0
+views,full,hpx,--method border --tile 64 --min-tile 16,0,0.0340724,6647,,,0
+views,full,hpx,--method border --tile 64 --min-tile 16,1,0.0341895,6647,,,0
+views,full,hpx,--method border --tile 64 --min-tile 16,2,0.0336936,6663,,,0
+views,full,hpx,--method border --tile 64 --min-tile 16,3,0.0348407,6648,,,0
+views,full,hpx,--method border --tile 64 --min-tile 16,4,0.0339804,6647,,,0
+views,full,cuda,,0,0.173645,,,,0
+views,full,cuda,,1,0.104015,,,,0
+views,full,cuda,,2,0.105399,,,,0
+views,full,cuda,,3,0.10513,,,,0
+views,full,cuda,,4,0.10466,,,,0
+views,interior,sequential,,0,8.16505,,,,0
+views,interior,sequential,,1,8.19209,,,,0
+views,interior,sequential,,2,8.13159,,,,0
+views,interior,sequential,,3,8.13208,,,,0
+views,interior,sequential,,4,8.13731,,,,0
+views,interior,hpx,--method row,0,0.594945,1137,,,0
+views,interior,hpx,--method row,1,0.601942,1137,,,0
+views,interior,hpx,--method row,2,0.603464,1137,,,0
+views,interior,hpx,--method row,3,0.609159,1137,,,0
+views,interior,hpx,--method row,4,0.59846,1138,,,0
+views,interior,hpx,--method tile --tile 64,0,0.585911,597,,,0
+views,interior,hpx,--method tile --tile 64,1,0.585584,598,,,0
+views,interior,hpx,--method tile --tile 64,2,0.605363,597,,,0
+views,interior,hpx,--method tile --tile 64,3,0.610125,598,,,0
+views,interior,hpx,--method tile --tile 64,4,0.590888,597,,,0
+views,interior,hpx,--method loop --chunk 0,0,0.606066,73,,,0
+views,interior,hpx,--method loop --chunk 0,1,0.61555,73,,,0
+views,interior,hpx,--method loop --chunk 0,2,0.609113,73,,,0
+views,interior,hpx,--method loop --chunk 0,3,0.603509,73,,,0
+views,interior,hpx,--method loop --chunk 0,4,0.602758,73,,,0
+views,interior,hpx,--method border --tile 64 --min-tile 16,0,0.0685178,2087,,,0
+views,interior,hpx,--method border --tile 64 --min-tile 16,1,0.0644063,2102,,,0
+views,interior,hpx,--method border --tile 64 --min-tile 16,2,0.0648044,2087,,,0
+views,interior,hpx,--method border --tile 64 --min-tile 16,3,0.0652303,2087,,,0
+views,interior,hpx,--method border --tile 64 --min-tile 16,4,0.0654616,2087,,,0
+views,interior,cuda,,0,0.653587,,,,0
+views,interior,cuda,,1,0.586258,,,,0
+views,interior,cuda,,2,0.586862,,,,0
+views,interior,cuda,,3,0.586396,,,,0
+views,interior,cuda,,4,0.586841,,,,0
+views,edges,sequential,,0,0.40317,,,,0
+views,edges,sequential,,1,0.400658,,,,0
+views,edges,sequential,,2,0.402356,,,,0
+views,edges,sequential,,3,0.401184,,,,0
+views,edges,sequential,,4,0.402859,,,,0
+views,edges,hpx,--method row,0,0.0326105,1137,,,0
+views,edges,hpx,--method row,1,0.0308683,1152,,,0
+views,edges,hpx,--method row,2,0.0342165,1137,,,0
+views,edges,hpx,--method row,3,0.0352145,1138,,,0
+views,edges,hpx,--method row,4,0.0360934,1137,,,0
+views,edges,hpx,--method tile --tile 64,0,0.0323873,615,,,0
+views,edges,hpx,--method tile --tile 64,1,0.0315866,615,,,0
+views,edges,hpx,--method tile --tile 64,2,0.0324374,615,,,0
+views,edges,hpx,--method tile --tile 64,3,0.0315033,615,,,0
+views,edges,hpx,--method tile --tile 64,4,0.0320911,616,,,0
+views,edges,hpx,--method loop --chunk 0,0,0.0323404,73,,,0
+views,edges,hpx,--method loop --chunk 0,1,0.0332018,73,,,0
+views,edges,hpx,--method loop --chunk 0,2,0.0334394,73,,,0
+views,edges,hpx,--method loop --chunk 0,3,0.0347905,73,,,0
+views,edges,hpx,--method loop --chunk 0,4,0.0324834,73,,,0
+views,edges,hpx,--method border --tile 64 --min-tile 16,0,0.0394283,10135,,,0
+views,edges,hpx,--method border --tile 64 --min-tile 16,1,0.0396159,10136,,,0
+views,edges,hpx,--method border --tile 64 --min-tile 16,2,0.0418768,10135,,,0
+views,edges,hpx,--method border --tile 64 --min-tile 16,3,0.0396751,10135,,,0
+views,edges,hpx,--method border --tile 64 --min-tile 16,4,0.0398833,10136,,,0
+views,edges,cuda,,0,0.107895,,,,0
+views,edges,cuda,,1,0.0791439,,,,0
+views,edges,cuda,,2,0.0792308,,,,0
+views,edges,cuda,,3,0.0776717,,,,0
+views,edges,cuda,,4,0.0790699,,,,0
+threads,full,sequential,,0,1.34786,,,,0
+threads,full,sequential,,1,1.34952,,,,0
+threads,full,sequential,,2,1.34697,,,,0
+threads,full,sequential,,3,1.34369,,,,0
+threads,full,sequential,,4,1.34331,,,,0
+threads,full,hpx,--method row --threads 1,0,1.36413,1092,,,0
+threads,full,hpx,--method row --threads 1,1,1.36667,1092,,,0
+threads,full,hpx,--method row --threads 1,2,1.36137,1092,,,0
+threads,full,hpx,--method row --threads 1,3,1.36411,1092,,,0
+threads,full,hpx,--method row --threads 1,4,1.36149,1092,,,0
+threads,full,hpx,--method row --threads 2,0,0.693328,1095,,,0
+threads,full,hpx,--method row --threads 2,1,0.692476,1095,,,0
+threads,full,hpx,--method row --threads 2,2,0.691499,1095,,,0
+threads,full,hpx,--method row --threads 2,3,0.693745,1095,,,0
+threads,full,hpx,--method row --threads 2,4,0.69282,1095,,,0
+threads,full,hpx,--method row --threads 4,0,0.351296,1101,,,0
+threads,full,hpx,--method row --threads 4,1,0.351579,1101,,,0
+threads,full,hpx,--method row --threads 4,2,0.352112,1101,,,0
+threads,full,hpx,--method row --threads 4,3,0.352174,1101,,,0
+threads,full,hpx,--method row --threads 4,4,0.35253,1101,,,0
+threads,full,hpx,--method row --threads 8,0,0.178815,1113,,,0
+threads,full,hpx,--method row --threads 8,1,0.178949,1113,,,0
+threads,full,hpx,--method row --threads 8,2,0.179888,1113,,,0
+threads,full,hpx,--method row --threads 8,3,0.180698,1113,,,0
+threads,full,hpx,--method row --threads 8,4,0.180276,1113,,,0
+threads,full,hpx,--method row --threads 16,0,0.0969565,1137,,,0
+threads,full,hpx,--method row --threads 16,1,0.0996859,1137,,,0
+threads,full,hpx,--method row --threads 16,2,0.0967367,1138,,,0
+threads,full,hpx,--method row --threads 16,3,0.0971198,1138,,,0
+threads,full,hpx,--method row --threads 16,4,0.0983212,1138,,,0
+threads,full,hpx,--method border --threads 1,0,0.353617,6602,,,0
+threads,full,hpx,--method border --threads 1,1,0.353417,6602,,,0
+threads,full,hpx,--method border --threads 1,2,0.352513,6602,,,0
+threads,full,hpx,--method border --threads 1,3,0.35089,6602,,,0
+threads,full,hpx,--method border --threads 1,4,0.353405,6602,,,0
+threads,full,hpx,--method border --threads 2,0,0.178943,6605,,,0
+threads,full,hpx,--method border --threads 2,1,0.179299,6605,,,0
+threads,full,hpx,--method border --threads 2,2,0.179294,6605,,,0
+threads,full,hpx,--method border --threads 2,3,0.181369,6605,,,0
+threads,full,hpx,--method border --threads 2,4,0.180927,6605,,,0
+threads,full,hpx,--method border --threads 4,0,0.0922766,6611,,,0
+threads,full,hpx,--method border --threads 4,1,0.0927885,6611,,,0
+threads,full,hpx,--method border --threads 4,2,0.0930926,6612,,,0
+threads,full,hpx,--method border --threads 4,3,0.0931812,6611,,,0
+threads,full,hpx,--method border --threads 4,4,0.0927624,6611,,,0
+threads,full,hpx,--method border --threads 8,0,0.0489697,6623,,,0
+threads,full,hpx,--method border --threads 8,1,0.0489337,6623,,,0
+threads,full,hpx,--method border --threads 8,2,0.0497726,6623,,,0
+threads,full,hpx,--method border --threads 8,3,0.0495312,6623,,,0
+threads,full,hpx,--method border --threads 8,4,0.0492564,6623,,,0
+threads,full,hpx,--method border --threads 16,0,0.0335763,6647,,,0
+threads,full,hpx,--method border --threads 16,1,0.034137,6647,,,0
+threads,full,hpx,--method border --threads 16,2,0.0336816,6647,,,0
+threads,full,hpx,--method border --threads 16,3,0.0337921,6647,,,0
+threads,full,hpx,--method border --threads 16,4,0.0340161,6647,,,0
+explorer,full,explorer,--pans 32,0,1.15365,,,630,0
+explorer,full,explorer,--pans 32,1,1.14273,,,630,0
+explorer,full,explorer,--pans 32,2,1.14717,,,630,0
+explorer,full,explorer,--pans 32,3,1.16584,,,630,0
+explorer,full,explorer,--pans 32,4,1.15302,,,630,0
+explorer,full,explorer,--pans 32 --no-reuse,0,1.86894,,,17190,0
+explorer,full,explorer,--pans 32 --no-reuse,1,1.88401,,,17190,0
+explorer,full,explorer,--pans 32 --no-reuse,2,1.87635,,,17190,0
+explorer,full,explorer,--pans 32 --no-reuse,3,1.89031,,,17190,0
+explorer,full,explorer,--pans 32 --no-reuse,4,1.90715,,,17190,0
+explorer,edges,explorer,--pans 32,0,1.18096,,,638,0
+explorer,edges,explorer,--pans 32,1,1.17472,,,638,0
+explorer,edges,explorer,--pans 32,2,1.19628,,,638,0
+explorer,edges,explorer,--pans 32,3,1.17162,,,638,0
+explorer,edges,explorer,--pans 32,4,1.19258,,,638,0
+explorer,edges,explorer,--pans 32 --no-reuse,0,2.12604,,,17856,0
+explorer,edges,explorer,--pans 32 --no-reuse,1,2.08925,,,17856,0
+explorer,edges,explorer,--pans 32 --no-reuse,2,2.13223,,,17856,0
+explorer,edges,explorer,--pans 32 --no-reuse,3,2.08942,,,17856,0
+explorer,edges,explorer,--pans 32 --no-reuse,4,2.10423,,,17856,0
