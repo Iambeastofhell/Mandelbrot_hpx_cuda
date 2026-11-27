@@ -171,4 +171,5 @@ See [benchmark/README.md](benchmark/README.md).
 | `src/sequential.cpp` | Sequential renderer |
 | `src/hpx.cpp` | HPX renderer |
 | `src/cuda.cu` | CUDA renderer |
-| `src/explorer.cpp` | Explorer |
+| `src/tile_cache.hpp` | Computing, reusing and drawing the tiles of the explorer |
+| `src/explorer.cpp` | Window and controls of the explorer |
