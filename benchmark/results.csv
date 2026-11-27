@@ -4,11 +4,11 @@ tune,full,sequential,,1,1.34292,,,,0
 tune,full,sequential,,2,1.34047,,,,0
 tune,full,sequential,,3,1.3402,,,,0
 tune,full,sequential,,4,1.3408,,,,0
-tune,full,hpx,--method pixel,0,0.948941,2.07366,,,0
-tune,full,hpx,--method pixel,1,0.987415,2.07366,,,0
-tune,full,hpx,--method pixel,2,0.964766,2.07366,,,0
-tune,full,hpx,--method pixel,3,0.945426,2.07366,,,0
-tune,full,hpx,--method pixel,4,0.950747,2.07366,,,0
+tune,full,hpx,--method pixel,0,0.948941,2073660,,,0
+tune,full,hpx,--method pixel,1,0.987415,2073660,,,0
+tune,full,hpx,--method pixel,2,0.964766,2073660,,,0
+tune,full,hpx,--method pixel,3,0.945426,2073660,,,0
+tune,full,hpx,--method pixel,4,0.950747,2073660,,,0
 tune,full,hpx,--method row,0,0.0967717,1137,,,0
 tune,full,hpx,--method row,1,0.0984971,1138,,,0
 tune,full,hpx,--method row,2,0.0972737,1138,,,0

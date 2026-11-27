@@ -9,7 +9,7 @@
 | View | Program | Options | Median (s) | Min (s) | Max (s) | Speedup | Mismatched | HPX threads |
 |---|---|---|---|---|---|---|---|---|
 | full | sequential |  | 1.3408 | 1.3402 | 1.3492 | 1.00 | 0 |  |
-| full | hpx | --method pixel | 0.9507 | 0.9454 | 0.9874 | 1.41 | 0 | 2.07366 |
+| full | hpx | --method pixel | 0.9507 | 0.9454 | 0.9874 | 1.41 | 0 | 2.07M |
 | full | hpx | --method row | 0.0973 | 0.0968 | 0.0989 | 13.78 | 0 | 1137 |
 | full | hpx | --method tile --tile 16 | 0.1051 | 0.1047 | 0.1087 | 12.76 | 0 | 8217 |
 | full | hpx | --method tile --tile 32 | 0.1003 | 0.1000 | 0.1010 | 13.37 | 0 | 2097 |
