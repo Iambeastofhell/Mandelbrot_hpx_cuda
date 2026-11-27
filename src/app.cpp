@@ -53,6 +53,7 @@ Options parse_options(int argc, char *argv[]) {
         }
         return argv[++i];
     };
+
     auto integer = [&]() {
         std::string text = value();
         char *end = nullptr;
@@ -64,6 +65,7 @@ Options parse_options(int argc, char *argv[]) {
         }
         return static_cast<int>(parsed);
     };
+   
     auto number = [&]() {
         std::string text = value();
         char *end = nullptr;
@@ -179,19 +181,17 @@ Pixel color_pixel(int count, int max_iter, Color color) {
     }
 
     auto r = static_cast<unsigned char>(9.0 * (1.0 - t) * t * t * t * 255.0);
-    auto g = static_cast<unsigned char>(15.0 * (1.0 - t) * (1.0 - t) * t * t *
-                                        255.0);
-    auto b = static_cast<unsigned char>(8.5 * (1.0 - t) * (1.0 - t) *
-                                        (1.0 - t) * t * 255.0);
+    auto g = static_cast<unsigned char>(15.0 * (1.0 - t) * (1.0 - t) * t * t * 255.0);
+    auto b = static_cast<unsigned char>(8.5 * (1.0 - t) * (1.0 - t) * (1.0 - t) * t * 255.0);
     return {r, g, b};
 }
 
-static bool write_file(const std::string &path, const std::string &header,
-                       const void *data, std::size_t size) {
+static bool write_file(const std::string &path, const std::string &header, const void *data, std::size_t size) {
+
     std::ofstream file(path, std::ios::binary);
     file << header;
-    file.write(static_cast<const char *>(data),
-               static_cast<std::streamsize>(size));
+    file.write(static_cast<const char *>(data), static_cast<std::streamsize>(size));
+
     file.close();
 
     if (!file) {
@@ -208,12 +208,11 @@ bool save_results(const Options &options, const std::vector<int> &counts) {
         std::vector<Pixel> pixels;
         pixels.reserve(counts.size());
         for (int count : counts) {
-            pixels.push_back(
-                color_pixel(count, options.view.max_iter, options.color));
+            pixels.push_back( color_pixel(count, options.view.max_iter, options.color));
         }
 
-        std::string header = "P6\n" + std::to_string(options.width) + " " +
-                             std::to_string(options.height) + "\n255\n";
+        std::string header = "P6\n" + std::to_string(options.width) + " " + std::to_string(options.height) + "\n255\n";
+
         if (!write_file(options.save_file, header, pixels.data(),
                         pixels.size() * sizeof(Pixel))) {
             return false;
