@@ -1,21 +1,24 @@
 #ifndef MANDELBROT_HPP
 #define MANDELBROT_HPP
 
-// The pixel grid and escape counts, shared by the CPU and GPU programs.
+// The pixel grid and escape counts. These parts are shared by the CPU and GPU
+// programs.
 
 #include <cmath>
 
+// Under nvcc a HOST_DEVICE function is built for both the CPU and the GPU.
 #ifdef __CUDACC__
 #define HOST_DEVICE __host__ __device__
 #else
 #define HOST_DEVICE
 #endif
 
-// Below this spacing neighbouring pixels are hard to tell apart in double precision.
 constexpr double MIN_SPACING = 1e-15;
 constexpr double MAX_VIEW_WIDTH = 16.0;
 
-// A block of pixels on a grid fixed to the complex plane, with x to the right and y down.
+// A rectangle of grid points, given by its top-left point and its size.
+// Point (x, y) is x * spacing on the real axis and -y * spacing on the
+// imaginary axis.
 struct Rect {
     long long left;
     long long top;
@@ -31,21 +34,26 @@ struct View {
 
 // Escape counts of the pixels in area, row by row.
 struct Canvas {
-    int* counts;
+    int *counts;
     Rect area;
 
-    HOST_DEVICE int& at(long long x, long long y) const {
+    // x and y are positions on the grid.
+    HOST_DEVICE int &at(long long x, long long y) const {
         return counts[(y - area.top) * area.width + (x - area.left)];
     }
 };
 
-inline View make_view(double center_x, double center_y, double view_width, int width, int height, int max_iter) {
+// Rounds the center to a grid point, so views with equal spacing share points.
+inline View make_view(double center_x, double center_y, double view_width,
+                      int width, int height, int max_iter) {
     double spacing = view_width / width;
     long long left = std::llround(center_x / spacing) - width / 2;
     long long top = std::llround(-center_y / spacing) - height / 2;
     return {{left, top, width, height}, spacing, max_iter};
 }
 
+// Steps of z = z^2 + c, starting at z = 0, until |z| exceeds 2. A result of
+// max_iter marks c as part of the set.
 HOST_DEVICE inline int escape_count(double cr, double ci, int max_iter) {
     double zr = 0.0;
     double zi = 0.0;
@@ -65,12 +73,13 @@ HOST_DEVICE inline int escape_count(double cr, double ci, int max_iter) {
     return iter;
 }
 
-// The coordinate depends only on the grid position, so a point has the same value in every view.
-HOST_DEVICE inline int pixel_count(const View& view, long long x, long long y) {
+HOST_DEVICE inline int pixel_count(const View &view, long long x, long long y) {
     return escape_count(x * view.spacing, -y * view.spacing, view.max_iter);
 }
 
-inline void compute(const View& view, const Rect& rect, const Canvas& canvas) {
+// Computes the escape count of every point in rect and stores it in canvas.
+// canvas.area must contain rect.
+inline void compute(const View &view, const Rect &rect, const Canvas &canvas) {
     for (long long y = rect.top; y < rect.top + rect.height; ++y) {
         for (long long x = rect.left; x < rect.left + rect.width; ++x) {
             canvas.at(x, y) = pixel_count(view, x, y);

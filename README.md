@@ -4,9 +4,9 @@ This repository contains a Mandelbrot set image generator for the course CS5658 
 
 ## Authors
 
-- Vishesh Srivastava 112301037
 - Rajdeep 112301045
 - Zeeshan Mohammed Rangrej 112301040
+- Vishesh Srivastava 112301037
 - Rajat Bhootra 112301044
 
 ## Scope

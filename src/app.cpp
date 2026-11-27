@@ -6,38 +6,47 @@
 #include <iostream>
 #include <limits>
 
-static void print_usage(const char* program) {
-    std::cout << "Usage: " << program << " [options]\n"
-              << "  --center X Y      Point at the center of the image (default: -0.5 0)\n"
-              << "  --view-width W    Width of the view on the real axis (default: 3)\n"
-              << "  --width N         Image width in pixels (default: 1024)\n"
-              << "  --height N        Image height in pixels (default: 768)\n"
-              << "  --maxiter N       Iteration limit (default: 500)\n"
-              << "  --color NAME      bw, gray or gradient (default: gradient)\n"
-              << "  --save FILE       Save the image as PPM\n"
-              << "  --counts FILE     Save the escape counts as raw 32-bit integers\n"
-              << "  --threads N       HPX worker threads (default: one per core)\n"
-              << "  --method NAME     HPX: pixel, row, tile, loop or border (default: row)\n"
-              << "  --tile N          HPX: side of a tile in pixels (default: 64)\n"
-              << "  --min-tile N      HPX border: smallest tile that is split (default: 16)\n"
-              << "  --chunk N         HPX loop: pixels per chunk, 0 lets HPX choose (default: 0)\n"
-              << "  --pans N          Explorer: pan N times without a window, then exit\n"
-              << "  --no-reuse        Explorer: compute every tile again for each view\n"
-              << "  --hpx:OPTION      HPX renderer: passed on to HPX\n"
-              << "  --help            Show this help\n";
+static void print_usage(const char *program) {
+    std::cout
+        << "Usage: " << program << " [options]\n"
+        << "  --center X Y      Point at the center of the image (default: "
+           "-0.5 0)\n"
+        << "  --view-width W    Width of the view on the real axis (default: "
+           "3)\n"
+        << "  --width N         Image width in pixels (default: 1024)\n"
+        << "  --height N        Image height in pixels (default: 768)\n"
+        << "  --maxiter N       Iteration limit (default: 500)\n"
+        << "  --color NAME      bw, gray or gradient (default: gradient)\n"
+        << "  --save FILE       Save the image as PPM\n"
+        << "  --counts FILE     Save the escape counts as raw 32-bit integers\n"
+        << "  --threads N       HPX worker threads (default: one per core)\n"
+        << "  --method NAME     HPX: pixel, row, tile, loop or border "
+           "(default: row)\n"
+        << "  --tile N          HPX: side of a tile in pixels (default: 64)\n"
+        << "  --min-tile N      HPX border: smallest tile that is split "
+           "(default: 16)\n"
+        << "  --chunk N         HPX loop: pixels per chunk, 0 lets HPX choose "
+           "(default: 0)\n"
+        << "  --pans N          Explorer: pan N times without a window, then "
+           "exit\n"
+        << "  --no-reuse        Explorer: compute every tile again for each "
+           "view\n"
+        << "  --hpx:OPTION      HPX renderer: passed on to HPX\n"
+        << "  --help            Show this help\n";
 }
 
-[[noreturn]] static void fail(const char* program, const std::string& message) {
+[[noreturn]] static void fail(const char *program, const std::string &message) {
     std::cerr << "Error: " << message << '\n';
     print_usage(program);
     std::exit(1);
 }
 
-Options parse_options(int argc, char* argv[]) {
+Options parse_options(int argc, char *argv[]) {
     Options options;
     std::string name;
     int i = 1;
 
+    // The argument that follows the current option.
     auto value = [&]() -> std::string {
         if (i + 1 >= argc) {
             fail(argv[0], "Missing value for " + name);
@@ -46,9 +55,10 @@ Options parse_options(int argc, char* argv[]) {
     };
     auto integer = [&]() {
         std::string text = value();
-        char* end = nullptr;
+        char *end = nullptr;
         long parsed = std::strtol(text.c_str(), &end, 10);
-        if (text.empty() || *end != '\0' || parsed < std::numeric_limits<int>::min() ||
+        if (text.empty() || *end != '\0' ||
+            parsed < std::numeric_limits<int>::min() ||
             parsed > std::numeric_limits<int>::max()) {
             fail(argv[0], "Invalid integer value for " + name);
         }
@@ -56,7 +66,7 @@ Options parse_options(int argc, char* argv[]) {
     };
     auto number = [&]() {
         std::string text = value();
-        char* end = nullptr;
+        char *end = nullptr;
         double parsed = std::strtod(text.c_str(), &end);
         if (text.empty() || *end != '\0' || !std::isfinite(parsed)) {
             fail(argv[0], "Invalid number value for " + name);
@@ -119,13 +129,15 @@ Options parse_options(int argc, char* argv[]) {
     if (options.width <= 0 || options.height <= 0) {
         fail(argv[0], "Width and height must be greater than zero");
     }
+    // The number of pixels must fit in an int.
     if (options.width > std::numeric_limits<int>::max() / options.height) {
         fail(argv[0], "The image is too large");
     }
     if (std::abs(options.center_x) > 4.0 || std::abs(options.center_y) > 4.0) {
         fail(argv[0], "Center coordinates must be between -4 and 4");
     }
-    if (options.view_width > MAX_VIEW_WIDTH || options.view_width / options.width < MIN_SPACING) {
+    if (options.view_width > MAX_VIEW_WIDTH ||
+        options.view_width / options.width < MIN_SPACING) {
         fail(argv[0], "View width is out of range");
     }
     if (options.max_iter <= 0) {
@@ -140,13 +152,15 @@ Options parse_options(int argc, char* argv[]) {
     if (options.min_tile < 3) {
         fail(argv[0], "min-tile must be at least 3");
     }
-    const std::string& method = options.method;
-    if (method != "pixel" && method != "row" && method != "tile" && method != "loop" && method != "border") {
+    const std::string &method = options.method;
+    if (method != "pixel" && method != "row" && method != "tile" &&
+        method != "loop" && method != "border") {
         fail(argv[0], "Unknown method: " + method);
     }
 
-    options.view = make_view(options.center_x, options.center_y, options.view_width, options.width,
-                             options.height, options.max_iter);
+    options.view =
+        make_view(options.center_x, options.center_y, options.view_width,
+                  options.width, options.height, options.max_iter);
     return options;
 }
 
@@ -165,15 +179,19 @@ Pixel color_pixel(int count, int max_iter, Color color) {
     }
 
     auto r = static_cast<unsigned char>(9.0 * (1.0 - t) * t * t * t * 255.0);
-    auto g = static_cast<unsigned char>(15.0 * (1.0 - t) * (1.0 - t) * t * t * 255.0);
-    auto b = static_cast<unsigned char>(8.5 * (1.0 - t) * (1.0 - t) * (1.0 - t) * t * 255.0);
+    auto g = static_cast<unsigned char>(15.0 * (1.0 - t) * (1.0 - t) * t * t *
+                                        255.0);
+    auto b = static_cast<unsigned char>(8.5 * (1.0 - t) * (1.0 - t) *
+                                        (1.0 - t) * t * 255.0);
     return {r, g, b};
 }
 
-static bool write_file(const std::string& path, const std::string& header, const void* data, std::size_t size) {
+static bool write_file(const std::string &path, const std::string &header,
+                       const void *data, std::size_t size) {
     std::ofstream file(path, std::ios::binary);
     file << header;
-    file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
+    file.write(static_cast<const char *>(data),
+               static_cast<std::streamsize>(size));
     file.close();
 
     if (!file) {
@@ -184,32 +202,39 @@ static bool write_file(const std::string& path, const std::string& header, const
     return true;
 }
 
-bool save_results(const Options& options, const std::vector<int>& counts) {
+bool save_results(const Options &options, const std::vector<int> &counts) {
     if (!options.save_file.empty()) {
         static_assert(sizeof(Pixel) == 3, "PPM needs three bytes per pixel");
         std::vector<Pixel> pixels;
         pixels.reserve(counts.size());
         for (int count : counts) {
-            pixels.push_back(color_pixel(count, options.view.max_iter, options.color));
+            pixels.push_back(
+                color_pixel(count, options.view.max_iter, options.color));
         }
 
-        std::string header = "P6\n" + std::to_string(options.width) + " " + std::to_string(options.height) + "\n255\n";
-        if (!write_file(options.save_file, header, pixels.data(), pixels.size() * sizeof(Pixel))) {
+        std::string header = "P6\n" + std::to_string(options.width) + " " +
+                             std::to_string(options.height) + "\n255\n";
+        if (!write_file(options.save_file, header, pixels.data(),
+                        pixels.size() * sizeof(Pixel))) {
             return false;
         }
     }
 
     return options.counts_file.empty() ||
-           write_file(options.counts_file, "", counts.data(), counts.size() * sizeof(int));
+           write_file(options.counts_file, "", counts.data(),
+                      counts.size() * sizeof(int));
 }
 
-int run(const Options& options, const char* name, Renderer render) {
-    std::vector<int> counts(static_cast<std::size_t>(options.width) * options.height);
+int run(const Options &options, const char *name, Renderer render) {
+    std::vector<int> counts(static_cast<std::size_t>(options.width) *
+                            options.height);
 
     auto start = std::chrono::steady_clock::now();
     render(options, counts);
-    std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - start;
-    std::cout << name << " generation time: " << elapsed.count() << " seconds\n";
+    std::chrono::duration<double> elapsed =
+        std::chrono::steady_clock::now() - start;
+    std::cout << name << " generation time: " << elapsed.count()
+              << " seconds\n";
 
     return save_results(options, counts) ? 0 : 1;
 }
