@@ -21,6 +21,7 @@ static void print_usage(const char* program) {
               << "  --tile N          HPX: side of a tile in pixels (default: 64)\n"
               << "  --min-tile N      HPX border: smallest tile that is split (default: 16)\n"
               << "  --chunk N         HPX loop: pixels per chunk, 0 lets HPX choose (default: 0)\n"
+              << "  --pans N          Explorer: pan N times without a window, then exit\n"
               << "  --help            Show this help\n";
 }
 
@@ -102,6 +103,8 @@ Options parse_options(int argc, char* argv[]) {
             options.min_tile = integer();
         } else if (name == "--chunk") {
             options.chunk = integer();
+        } else if (name == "--pans") {
+            options.pans = integer();
         } else {
             fail(argv[0], "Unknown option: " + name);
         }
@@ -122,8 +125,8 @@ Options parse_options(int argc, char* argv[]) {
     if (options.max_iter <= 0) {
         fail(argv[0], "maxiter must be greater than zero");
     }
-    if (options.threads < 0 || options.chunk < 0) {
-        fail(argv[0], "threads and chunk must be zero or greater");
+    if (options.threads < 0 || options.chunk < 0 || options.pans < 0) {
+        fail(argv[0], "threads, chunk and pans must be zero or greater");
     }
     if (options.tile <= 0) {
         fail(argv[0], "tile must be greater than zero");

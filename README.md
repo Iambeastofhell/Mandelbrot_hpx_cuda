@@ -16,6 +16,7 @@ Implementation of HPX applications for Mandelbrot set generation, compared with 
 - `mandelbrot_sequential` uses a normal nested CPU loop.
 - `mandelbrot_hpx` splits the image into HPX tasks by one of the methods below.
 - `mandelbrot_cuda` runs one CUDA thread per pixel.
+- `mandelbrot_explorer` opens a window that can be panned and zoomed.
 - All programs use the same pixel mapping, colors, file formats, and command line options.
 
 ## Versions
@@ -25,7 +26,7 @@ Implementation of HPX applications for Mandelbrot set generation, compared with 
 | 1 | Sequential CPU renderer, the reference for correctness and time | `mandelbrot_sequential` | |
 | 2 | HPX renderer with one task per pixel, row or fixed-size tile, and parallel loops with different chunk sizes | `mandelbrot_hpx` | 1 |
 | 3 | HPX renderer that checks tile borders to skip work, with a tree of futures | `mandelbrot_hpx --method border` | Best of 2 |
-| 4a | Live explorer that draws tiles as they finish, cancels old work and recomputes everything | Not yet | 3 |
+| 4a | Live explorer that draws tiles as they finish, cancels old work and recomputes everything | `mandelbrot_explorer` | 3 |
 | 4b | Live explorer that reuses earlier work | Not yet | 4a |
 | 5 | CUDA renderer that computes every pixel on the GPU | `mandelbrot_cuda` | 3 |
 | 6 | Version 3 with small non-uniform tiles computed by GPU kernels | Not yet | 3 and 5 |
@@ -39,10 +40,13 @@ make              # sequential and HPX renderers
 make sequential
 make hpx
 make cuda
+make explorer
 make clean        # removes build/
 ```
 
-The HPX build needs an installed HPX. It looks in `/usr` by default. The `hpx` submodule holds the HPX 1.11.0 source. For another install, such as a local build of it, pass its prefix with `make hpx HPX_PREFIX=/path/to/hpx`.
+The HPX and explorer builds need an installed HPX. It looks in `/usr` by default. The `hpx` submodule holds the HPX 1.11.0 source. For another install, such as a local build of it, pass its prefix with `make hpx HPX_PREFIX=/path/to/hpx`.
+
+The explorer also needs the SDL2 development files.
 
 The CUDA build needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. It targets the installed GPU. To build for another one, set the architecture, for example `make cuda CUDA_ARCH=sm_80`.
 
@@ -69,9 +73,10 @@ The CUDA build needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. It targ
 | `--tile N` | Side of a tile in pixels | 64 |
 | `--min-tile N` | Smallest tile the border method splits, at least 3 | 16 |
 | `--chunk N` | Pixels per loop chunk, 0 lets HPX choose | 0 |
+| `--pans N` | Explorer: pan N times without a window, then exit | 0 |
 | `--help` | Print usage information | |
 
-`--threads`, `--method`, `--tile`, `--min-tile` and `--chunk` only affect HPX. Other programs accept and ignore them.
+`--threads`, `--method`, `--tile`, `--min-tile`, `--chunk` and `--pans` only affect the HPX programs that use them. Other programs accept and ignore them.
 
 Each program prints its generation time, which covers computing the escape counts. Coloring and saving are not included. The CUDA time includes allocating device memory and copying the results back, but not starting the CUDA runtime.
 
@@ -101,6 +106,27 @@ Every pixel belongs to one tile, so tasks never write the same pixel.
 
 The method is not exact, since detail thinner than a pixel can pass between border pixels. Comparing with the counts of the sequential program gives the number of mismatched pixels.
 
+## Explorer
+
+```bash
+./build/mandelbrot_explorer --width 1280 --height 720
+```
+
+| Input | Action |
+|---|---|
+| Drag | Pan |
+| Scroll | Zoom around the cursor |
+| Up, Down | Double or halve the iteration limit |
+| `c` | Change the color |
+| `r` | Return to the starting view |
+| `q`, Escape | Quit |
+
+Each tile of `--tile` pixels is computed with the border method and drawn as soon as it finishes, which its tasks report through an HPX channel. A new view cancels the tasks of the old one with stop tokens and computes every tile again. Until a tile is ready, the old picture, moved or scaled to the new view, stands in for it.
+
+The title of the window shows the view as options for the other programs, and the time the view took.
+
+`--pans N` pans around a square N times without opening a window, then prints the time and the number of tiles computed. `--save` and `--counts` then write the final view.
+
 ## Pixel grid
 
 Pixels lie on a grid fixed to the complex plane. The spacing is the view width divided by the image width, the same on both axes, and the center is rounded to the nearest grid point. A point therefore has exactly the same value in every view with the same spacing.
@@ -127,3 +153,4 @@ cmp sequential.bin hpx.bin
 | `src/sequential.cpp` | Sequential renderer |
 | `src/hpx.cpp` | HPX renderer |
 | `src/cuda.cu` | CUDA renderer |
+| `src/explorer.cpp` | Explorer |
