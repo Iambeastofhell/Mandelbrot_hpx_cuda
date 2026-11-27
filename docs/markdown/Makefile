@@ -2,7 +2,7 @@ PANDOC      := pandoc
 PANDOCFLAGS := --from=markdown --to=pdf
 
 ABSTRACT_MD  := abstract.md
-ABSTRACT_PDF := $(ABSTRACT_MD:.md=.pdf)
+ABSTRACT_PDF := ../pdf/abstract.pdf
 
 .PHONY: all abstract clean
 

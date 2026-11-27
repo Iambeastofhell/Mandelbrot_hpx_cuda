@@ -42,7 +42,7 @@ make cuda
 make clean        # removes build/
 ```
 
-The HPX build needs an installed HPX. It looks in `/usr` by default. For another install, such as a local build of the submodule, pass its prefix with `make hpx HPX_PREFIX=/path/to/hpx`.
+The HPX build needs an installed HPX. It looks in `/usr` by default. The `hpx` submodule holds the HPX 1.11.0 source. For another install, such as a local build of it, pass its prefix with `make hpx HPX_PREFIX=/path/to/hpx`.
 
 The CUDA build needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. It targets the installed GPU. To build for another one, set the architecture, for example `make cuda CUDA_ARCH=sm_80`.
 
