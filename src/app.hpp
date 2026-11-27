@@ -29,6 +29,7 @@ struct Options {
     int chunk = 0;
     int pans = 0;
     bool reuse = true;
+    std::vector<std::string> hpx_options;  // passed on to HPX as they are
     std::string save_file;
     std::string counts_file;
     View view{};  // built from the values above

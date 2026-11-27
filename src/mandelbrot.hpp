@@ -1,7 +1,7 @@
 #ifndef MANDELBROT_HPP
 #define MANDELBROT_HPP
 
-// Everything here is shared by the CPU and GPU programs.
+// The pixel grid and escape counts, shared by the CPU and GPU programs.
 
 #include <cmath>
 

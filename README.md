@@ -44,7 +44,7 @@ make explorer
 make clean        # removes build/
 ```
 
-The HPX and explorer builds need an installed HPX. It looks in `/usr` by default. The `hpx` submodule holds the HPX 1.11.0 source. For another install, such as a local build of it, pass its prefix with `make hpx HPX_PREFIX=/path/to/hpx`.
+The HPX and explorer builds need an installed HPX, looked for in `/usr` by default. The `hpx` submodule holds the HPX 1.11.0 source. For another install, such as a local build of it, pass its prefix with `make hpx HPX_PREFIX=/path/to/hpx`.
 
 The explorer also needs the SDL2 development files.
 
@@ -70,16 +70,17 @@ The CUDA build needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. It targ
 | `--counts FILE` | Save the escape counts as raw 32-bit integers | None |
 | `--threads N` | HPX worker threads, at most the number of CPUs | One per core |
 | `--method NAME` | HPX method: `pixel`, `row`, `tile`, `loop` or `border` | `row` |
-| `--tile N` | Side of a tile in pixels | 64 |
+| `--tile N` | Side of a tile in pixels, at most 4096 | 64 |
 | `--min-tile N` | Smallest tile the border method splits, at least 3 | 16 |
 | `--chunk N` | Pixels per loop chunk, 0 lets HPX choose | 0 |
 | `--pans N` | Explorer: pan N times without a window, then exit | 0 |
 | `--no-reuse` | Explorer: compute every tile again for each view | |
+| `--hpx:OPTION` | HPX renderer: passed on to HPX, for example `--hpx:print-bind` | |
 | `--help` | Print usage information | |
 
 `--threads`, `--method`, `--tile`, `--min-tile`, `--chunk`, `--pans` and `--no-reuse` only affect the programs that use them. Other programs accept and ignore them.
 
-Each program prints its generation time, which covers computing the escape counts. Coloring and saving are not included. The CUDA time includes allocating device memory and copying the results back, but not starting the CUDA runtime.
+The renderers print their generation time, which covers computing the escape counts. Coloring and saving are not included. The CUDA time includes allocating device memory and copying the results back, but not starting the CUDA runtime.
 
 ## HPX methods
 
@@ -155,6 +156,10 @@ The CPU and GPU programs share the pixel code in `src/mandelbrot.hpp`, and the M
 ./build/mandelbrot_hpx --counts hpx.bin
 cmp sequential.bin hpx.bin
 ```
+
+## Benchmarks
+
+See [benchmark/README.md](benchmark/README.md).
 
 ## Source layout
 

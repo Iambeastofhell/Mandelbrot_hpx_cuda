@@ -23,6 +23,7 @@ static void print_usage(const char* program) {
               << "  --chunk N         HPX loop: pixels per chunk, 0 lets HPX choose (default: 0)\n"
               << "  --pans N          Explorer: pan N times without a window, then exit\n"
               << "  --no-reuse        Explorer: compute every tile again for each view\n"
+              << "  --hpx:OPTION      HPX renderer: passed on to HPX\n"
               << "  --help            Show this help\n";
 }
 
@@ -108,6 +109,8 @@ Options parse_options(int argc, char* argv[]) {
             options.pans = integer();
         } else if (name == "--no-reuse") {
             options.reuse = false;
+        } else if (name.rfind("--hpx:", 0) == 0) {
+            options.hpx_options.push_back(name);
         } else {
             fail(argv[0], "Unknown option: " + name);
         }
@@ -131,8 +134,8 @@ Options parse_options(int argc, char* argv[]) {
     if (options.threads < 0 || options.chunk < 0 || options.pans < 0) {
         fail(argv[0], "threads, chunk and pans must be zero or greater");
     }
-    if (options.tile <= 0) {
-        fail(argv[0], "tile must be greater than zero");
+    if (options.tile <= 0 || options.tile > 4096) {
+        fail(argv[0], "tile must be between 1 and 4096");
     }
     if (options.min_tile < 3) {
         fail(argv[0], "min-tile must be at least 3");

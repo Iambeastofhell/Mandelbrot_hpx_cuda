@@ -69,9 +69,17 @@ static void render(const Options& options, std::vector<int>& counts) {
 int main(int argc, char* argv[]) {
     Options options = parse_options(argc, argv);
 
-    std::string threads_option = "--hpx:threads=" + std::to_string(options.threads);
-    char* hpx_argv[] = {argv[0], threads_option.data(), nullptr};
-    int hpx_argc = options.threads > 0 ? 2 : 1;
+    std::vector<std::string> arguments = {argv[0]};
+    if (options.threads > 0) {
+        arguments.push_back("--hpx:threads=" + std::to_string(options.threads));
+    }
+    arguments.insert(arguments.end(), options.hpx_options.begin(), options.hpx_options.end());
+
+    std::vector<char*> hpx_argv;
+    for (std::string& argument : arguments) {
+        hpx_argv.push_back(argument.data());
+    }
+    hpx_argv.push_back(nullptr);
 
     return hpx::init(
         [&options](hpx::program_options::variables_map&) {
@@ -79,5 +87,5 @@ int main(int argc, char* argv[]) {
             hpx::finalize();
             return status;
         },
-        hpx_argc, hpx_argv);
+        static_cast<int>(arguments.size()), hpx_argv.data());
 }
