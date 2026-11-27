@@ -16,8 +16,8 @@ Implementation of HPX applications for Mandelbrot set generation, compared with 
 - `mandelbrot_sequential` uses a normal nested CPU loop.
 - `mandelbrot_hpx` splits the image into HPX tasks, one per row by default.
 - `mandelbrot_cuda` runs one CUDA thread per pixel.
-- `mandelbrot_hpx_cuda` uses std::thread to launch CUDA kernels per image chunk.
-- `mandelbrot_hpx_cuda_opt` uses persistent CUDA streams for overlap.
+- `mandelbrot_hpx_cuda` launches one CUDA kernel per row strip from HPX tasks.
+- `mandelbrot_hpx_cuda_opt` gives each HPX task its own CUDA stream and reuses its device memory.
 - All programs use the same pixel mapping, colors, PPM format, and command line options.
 
 ## Build
@@ -56,14 +56,14 @@ make cuda
 
 This needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. The Makefile targets the installed GPU. To build for another one, set the architecture, for example `make cuda CUDA_ARCH=sm_80`. It is not part of `make all`.
 
-Build the hybrid implementations (std::thread + CUDA):
+Build the HPX CUDA implementations:
 
 ```bash
-make hpx-cuda       # basic hybrid
-make hpx-cuda-opt   # optimized with CUDA streams
+make hpx-cuda
+make hpx-cuda-opt
 ```
 
-These need `nvcc` and an NVIDIA GPU. They are part of `make all`.
+These need HPX, the CUDA toolkit and an NVIDIA GPU. They are not part of `make all`.
 
 Remove generated executables, temporary test files, and the `output` directory:
 
@@ -140,7 +140,7 @@ The pixel code is in `mandelbrot_kernel.cuh`. It repeats the CPU code in `mandel
 cmp output/mandelbrot_cuda.ppm output/mandelbrot_seq.ppm
 ```
 
-## Hybrid examples
+## HPX CUDA examples
 
 ```bash
 ./build/mandelbrot_hpx_cuda \
@@ -158,7 +158,9 @@ cmp output/mandelbrot_cuda.ppm output/mandelbrot_seq.ppm
   --save mandelbrot_hpx_cuda_opt.ppm
 ```
 
-Both split the image into chunks and launch a CUDA kernel per chunk from a thread pool. The optimized version keeps device memory and streams alive across tasks to overlap kernel execution with memory copies. `--grain N` controls chunk size (default: 1/8 of image). Images match the CPU versions.
+The image is split into strips of whole rows. `--grain N` sets the strip size in pixels, rounded down to whole rows. The default is an eighth of the image.
+
+`mandelbrot_hpx_cuda` allocates device memory for every strip and each task waits for its copy to finish. `mandelbrot_hpx_cuda_opt` runs one task per stream. A task takes the next strip when its stream is done, and yields its worker thread while it waits. HPX does not need to be built with CUDA support.
 
 ## Save and display combinations
 
