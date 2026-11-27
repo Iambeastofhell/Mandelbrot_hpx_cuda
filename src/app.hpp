@@ -23,7 +23,9 @@ struct Options {
     int max_iter = 500;
     Color color = Color::gradient;
     int threads = 0;
-    int grain = 0;
+    std::string method = "row";
+    int tile = 64;
+    int chunk = 0;
     std::string save_file;
     std::string counts_file;
     View view{};  // built from the values above

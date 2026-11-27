@@ -16,8 +16,10 @@ static void print_usage(const char* program) {
               << "  --color NAME      bw, gray or gradient (default: gradient)\n"
               << "  --save FILE       Save the image as PPM\n"
               << "  --counts FILE     Save the escape counts as raw 32-bit integers\n"
-              << "  --threads N       HPX worker threads (default: chosen by HPX)\n"
-              << "  --grain N         Pixels per HPX task, 0 for one row (default: 0)\n"
+              << "  --threads N       HPX worker threads (default: one per core)\n"
+              << "  --method NAME     HPX: pixel, row, tile or loop (default: row)\n"
+              << "  --tile N          HPX: side of a tile in pixels (default: 64)\n"
+              << "  --chunk N         HPX loop: pixels per chunk, 0 lets HPX choose (default: 0)\n"
               << "  --help            Show this help\n";
 }
 
@@ -91,8 +93,12 @@ Options parse_options(int argc, char* argv[]) {
             options.counts_file = value();
         } else if (name == "--threads") {
             options.threads = integer();
-        } else if (name == "--grain") {
-            options.grain = integer();
+        } else if (name == "--method") {
+            options.method = value();
+        } else if (name == "--tile") {
+            options.tile = integer();
+        } else if (name == "--chunk") {
+            options.chunk = integer();
         } else {
             fail(argv[0], "Unknown option: " + name);
         }
@@ -113,8 +119,15 @@ Options parse_options(int argc, char* argv[]) {
     if (options.max_iter <= 0) {
         fail(argv[0], "maxiter must be greater than zero");
     }
-    if (options.threads < 0 || options.grain < 0) {
-        fail(argv[0], "threads and grain must be zero or greater");
+    if (options.threads < 0 || options.chunk < 0) {
+        fail(argv[0], "threads and chunk must be zero or greater");
+    }
+    if (options.tile <= 0) {
+        fail(argv[0], "tile must be greater than zero");
+    }
+    const std::string& method = options.method;
+    if (method != "pixel" && method != "row" && method != "tile" && method != "loop") {
+        fail(argv[0], "Unknown method: " + method);
     }
 
     options.view = make_view(options.center_x, options.center_y, options.view_width, options.width,

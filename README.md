@@ -14,21 +14,21 @@ This repository contains a Mandelbrot set image generator for the course CS5658 
 Implementation of HPX applications for Mandelbrot set generation, compared with other versions such as sequential and pure CUDA.
 
 - `mandelbrot_sequential` uses a normal nested CPU loop.
-- `mandelbrot_hpx` splits the image into HPX tasks, one per row by default.
+- `mandelbrot_hpx` splits the image into HPX tasks, by one of the methods below.
 - `mandelbrot_cuda` runs one CUDA thread per pixel.
 - All programs use the same pixel mapping, colors, file formats, and command line options.
 
 ## Versions
 
-| Version | Description | Compared with |
-|---|---|---|
-| 1 | Sequential CPU renderer, the reference for correctness and time | |
-| 2 | HPX renderer with one task per pixel, row or fixed-size tile, and parallel loops with different chunk sizes | 1 |
-| 3 | HPX renderer that checks tile borders to skip work, with a tree of futures | Best of 2 |
-| 4a | Live explorer that draws tiles as they finish, cancels old work and recomputes everything | 3 |
-| 4b | Live explorer that reuses earlier work | 4a |
-| 5 | CUDA renderer that computes every pixel on the GPU | 3 |
-| 6 | Version 3 with small non-uniform tiles computed by GPU kernels | 3 and 5 |
+| Version | Description | Program | Compared with |
+|---|---|---|---|
+| 1 | Sequential CPU renderer, the reference for correctness and time | `mandelbrot_sequential` | |
+| 2 | HPX renderer with one task per pixel, row or fixed-size tile, and parallel loops with different chunk sizes | `mandelbrot_hpx` | 1 |
+| 3 | HPX renderer that checks tile borders to skip work, with a tree of futures | Not yet | Best of 2 |
+| 4a | Live explorer that draws tiles as they finish, cancels old work and recomputes everything | Not yet | 3 |
+| 4b | Live explorer that reuses earlier work | Not yet | 4a |
+| 5 | CUDA renderer that computes every pixel on the GPU | `mandelbrot_cuda` | 3 |
+| 6 | Version 3 with small non-uniform tiles computed by GPU kernels | Not yet | 3 and 5 |
 
 ## Build
 
@@ -50,7 +50,7 @@ The CUDA build needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. It targ
 
 ```bash
 ./build/mandelbrot_sequential --save full.ppm
-./build/mandelbrot_hpx --center -0.745 0.113 --view-width 0.01 --maxiter 2000 --threads 8 --save seahorse.ppm
+./build/mandelbrot_hpx --method tile --center -0.745 0.113 --view-width 0.01 --maxiter 2000 --save seahorse.ppm
 ./build/mandelbrot_cuda --width 1920 --height 1080 --save full.ppm
 ```
 
@@ -64,13 +64,26 @@ The CUDA build needs the CUDA toolkit (`nvcc`) and an NVIDIA GPU to run. It targ
 | `--color NAME` | `bw`, `gray` or `gradient` | `gradient` |
 | `--save FILE` | Save the image as PPM | None |
 | `--counts FILE` | Save the escape counts as raw 32-bit integers | None |
-| `--threads N` | HPX worker threads, at most the number of CPUs | Chosen by HPX |
-| `--grain N` | Pixels per HPX task, 0 for one row | 0 |
+| `--threads N` | HPX worker threads, at most the number of CPUs | One per core |
+| `--method NAME` | HPX method: `pixel`, `row`, `tile` or `loop` | `row` |
+| `--tile N` | Side of a tile in pixels | 64 |
+| `--chunk N` | Pixels per loop chunk, 0 lets HPX choose | 0 |
 | `--help` | Print usage information | |
 
-`--threads` and `--grain` only affect HPX. Other programs accept and ignore them.
+`--threads`, `--method`, `--tile` and `--chunk` only affect HPX. Other programs accept and ignore them.
 
 Each program prints its generation time, which covers computing the escape counts. Coloring and saving are not included. The CUDA time includes allocating device memory and copying the results back, but not starting the CUDA runtime.
+
+## HPX methods
+
+| Method | Work given to each task |
+|---|---|
+| `pixel` | One pixel |
+| `row` | One row |
+| `tile` | One square tile of the pixel grid |
+| `loop` | A chunk of a parallel loop over all pixels |
+
+`pixel` creates one task for every pixel, which takes about 500 MB of memory at 1920x1080.
 
 ## Pixel grid
 
@@ -94,6 +107,7 @@ cmp sequential.bin hpx.bin
 |---|---|
 | `src/mandelbrot.hpp` | Pixel grid and escape count, used on the CPU and the GPU |
 | `src/app.hpp`, `src/app.cpp` | Command line options, colors, timing and output files |
+| `src/tiles.hpp` | Tiles of the pixel grid |
 | `src/sequential.cpp` | Sequential renderer |
 | `src/hpx.cpp` | HPX renderer |
 | `src/cuda.cu` | CUDA renderer |
